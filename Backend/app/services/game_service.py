@@ -463,6 +463,17 @@ class GameService:
         
         return response
     
+    async def get_game(self, game_id: str) -> Optional[Game]:
+        """Obtener juego por ID desde la base de datos"""
+        from app.db.database import get_db
+        
+        try:
+            async for db in get_db():
+                result = await db.execute(select(Game).where(Game.id == uuid.UUID(game_id)))
+                return result.scalar_one_or_none()
+        except Exception:
+            return None
+    
     async def _update_game_statistics(self, db: AsyncSession, game_state: GameState):
         """Actualizar estadísticas de los jugadores"""
         

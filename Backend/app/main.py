@@ -5,11 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+import socketio
 import time
 import logging
 from app.core.config import settings
 from app.api.v1.auth import router as auth_router
 from app.api.v1.game import router as game_router
+from app.api.v1.websocket import router as websocket_router
+from app.sockets.socket_manager import socket_manager
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +27,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Crear aplicación Socket.io
+socket_app = socketio.ASGIApp(socket_manager.sio, app)
 
 # Middleware de CORS
 app.add_middleware(
@@ -91,6 +97,7 @@ async def health_check():
 # Incluir routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(game_router, prefix=f"{settings.API_V1_STR}/game", tags=["game"])
+app.include_router(websocket_router, prefix=settings.API_V1_STR)
 
 
 # Eventos de startup y shutdown
@@ -111,7 +118,7 @@ async def shutdown_event():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.main:app",
+        "app.main:socket_app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.DEBUG,

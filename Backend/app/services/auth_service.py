@@ -10,7 +10,8 @@ from fastapi import HTTPException, status
 from app.db.models.user import User, GameStatistics
 from app.schemas.auth import UserRegister, UserLogin
 from app.schemas.user import UserResponse
-from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
+from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_token
+from app.db.database import get_db
 
 
 class AuthService:
@@ -217,3 +218,17 @@ class AuthService:
         await db.commit()
         
         return True
+    
+    async def verify_token(self, token: str) -> Optional[User]:
+        """Verificar token JWT y obtener usuario"""
+        try:
+            user_id = verify_token(token, "access")
+            if not user_id:
+                return None
+            
+            # Obtener sesión de base de datos
+            async for db in get_db():
+                user = await self.get_user_by_id(db, uuid.UUID(user_id))
+                return user
+        except Exception:
+            return None
