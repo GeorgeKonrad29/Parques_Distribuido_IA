@@ -27,9 +27,8 @@ class User(Base):
     
     # Relaciones
     game_players = relationship("GamePlayer", back_populates="user")
-    moves = relationship("Move", back_populates="player")
+    game_moves = relationship("GameMove", back_populates="player")
     statistics = relationship("GameStatistics", back_populates="user", uselist=False)
-    recommendation_logs = relationship("RecommendationLog", back_populates="player")
 
 
 class GameStatistics(Base):

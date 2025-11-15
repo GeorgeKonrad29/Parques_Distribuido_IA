@@ -9,6 +9,7 @@ import time
 import logging
 from app.core.config import settings
 from app.api.v1.auth import router as auth_router
+from app.api.v1.game import router as game_router
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -89,6 +90,7 @@ async def health_check():
 
 # Incluir routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
+app.include_router(game_router, prefix=f"{settings.API_V1_STR}/game", tags=["game"])
 
 
 # Eventos de startup y shutdown

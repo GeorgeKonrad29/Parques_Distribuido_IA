@@ -56,7 +56,7 @@ class AITrainingData(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relaciones
-    game = relationship("Game", back_populates="ai_training_data")
+    # game = relationship("Game", back_populates="ai_training_data")  # TODO: Implementar cuando esté listo
     bot = relationship("AIBot", back_populates="training_data")
 
 
@@ -78,8 +78,8 @@ class RecommendationLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relaciones
-    game = relationship("Game", back_populates="recommendation_logs")
-    player = relationship("User", back_populates="recommendation_logs")
+    # game = relationship("Game", back_populates="recommendation_logs")  # TODO: Implementar cuando esté listo
+    # player = relationship("User", back_populates="recommendation_logs")  # TODO: Implementar cuando esté listo
 
 
 class GameAnalysis(Base):
