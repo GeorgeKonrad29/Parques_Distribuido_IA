@@ -15,6 +15,7 @@ from app.api.v1.game import router as game_router
 from app.api.v1.websocket import router as websocket_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.recommendations import router as recommendations_router
+from app.api.v1.distributed import router as distributed_router
 from app.sockets.socket_manager import socket_manager
 from app.ai.ai_service import ai_service
 
@@ -104,6 +105,7 @@ app.include_router(game_router, prefix=f"{settings.API_V1_STR}/game", tags=["gam
 app.include_router(websocket_router, prefix=settings.API_V1_STR)
 app.include_router(ai_router, prefix=settings.API_V1_STR)
 app.include_router(recommendations_router, prefix=f"{settings.API_V1_STR}/recommendations", tags=["recommendations"])
+app.include_router(distributed_router, prefix=f"{settings.API_V1_STR}/sync", tags=["distributed-sync"])
 
 
 # Eventos de startup y shutdown
