@@ -8,11 +8,14 @@ from fastapi.responses import JSONResponse
 import socketio
 import time
 import logging
+import asyncio
 from app.core.config import settings
 from app.api.v1.auth import router as auth_router
 from app.api.v1.game import router as game_router
 from app.api.v1.websocket import router as websocket_router
+from app.api.v1.ai import router as ai_router
 from app.sockets.socket_manager import socket_manager
+from app.ai.ai_service import ai_service
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -98,6 +101,7 @@ async def health_check():
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(game_router, prefix=f"{settings.API_V1_STR}/game", tags=["game"])
 app.include_router(websocket_router, prefix=settings.API_V1_STR)
+app.include_router(ai_router, prefix=settings.API_V1_STR)
 
 
 # Eventos de startup y shutdown
@@ -107,12 +111,31 @@ async def startup_event():
     logger.info("Starting Parqués Distribuido API...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+    
+    # Iniciar task de manejo de bots en segundo plano
+    asyncio.create_task(bot_background_task())
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Eventos al cerrar la aplicación"""
     logger.info("Shutting down Parqués Distribuido API...")
+
+
+async def bot_background_task():
+    """Task en segundo plano para manejar turnos de bots"""
+    from app.db.database import get_db
+    
+    while True:
+        try:
+            async for db in get_db():
+                await ai_service.handle_bot_turns_in_background(db)
+                break  # Solo necesitamos una sesión
+        except Exception as e:
+            logger.error(f"Error in bot background task: {e}")
+        
+        # Esperar 2 segundos antes de la siguiente verificación
+        await asyncio.sleep(2)
 
 
 if __name__ == "__main__":
