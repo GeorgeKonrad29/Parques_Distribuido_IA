@@ -327,7 +327,7 @@ pip install -r requirements.txt
 ### Para Render
 
 **Build Command**: `cd Backend && pip install -r requirements.txt`
-**Start Command**: `cd Backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+**Start Command**: `./start.sh`
 
 **Variables de entorno obligatorias**:
 ```
@@ -336,4 +336,10 @@ DATABASE_URL=postgresql+asyncpg://neondb_owner:npg_BjwQ2ZtsCnR5@ep-young-salad-a
 SECRET_KEY=tu-clave-secreta-super-segura-para-produccion-2024
 ENVIRONMENT=production
 DEBUG=false
+BACKEND_CORS_ORIGINS=*
 ```
+
+> ⚠️ **IMPORTANTE para CORS**: 
+> - Para permitir todos los orígenes: `BACKEND_CORS_ORIGINS=*`
+> - Para orígenes específicos: `BACKEND_CORS_ORIGINS=https://miapp.com,https://www.miapp.com`
+> - NO usar formato JSON en Render: `["https://miapp.com"]` ❌

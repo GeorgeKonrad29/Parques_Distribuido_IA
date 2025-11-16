@@ -48,12 +48,46 @@ class Settings(BaseSettings):
     ]
     
     @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: str | List[str]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+    def assemble_cors_origins(cls, v) -> List[str]:
+        # Si es None, usar valores por defecto
+        if v is None:
+            return [
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "https://localhost:3000",
+                "https://localhost:8000",
+            ]
+        
+        # Si es una lista, devolverla tal como está
+        if isinstance(v, list):
             return v
-        raise ValueError(v)
+            
+        # Si es string, procesarlo
+        if isinstance(v, str):
+            # Caso especial para "*"
+            if v.strip() == "*":
+                return ["*"]
+            
+            # Si parece JSON, intentar parsearlo
+            if v.strip().startswith("[") and v.strip().endswith("]"):
+                try:
+                    import json
+                    return json.loads(v.strip())
+                except (json.JSONDecodeError, ValueError):
+                    # Si falla el JSON, tratar como string simple
+                    pass
+            
+            # Dividir por comas y limpiar
+            origins = []
+            for origin in v.split(","):
+                origin = origin.strip()
+                if origin:
+                    origins.append(origin)
+            
+            return origins if origins else ["*"]
+        
+        # Para cualquier otro tipo, convertir a string y procesar
+        return [str(v)]
     
     # Configuración de email (para recuperación de contraseña)
     SMTP_TLS: bool = True
