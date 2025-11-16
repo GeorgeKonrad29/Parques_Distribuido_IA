@@ -2,9 +2,9 @@
 Configuración principal de la aplicación
 """
 import os
-from typing import Optional, List
-from pydantic import validator
-from pydantic_settings import BaseSettings
+from typing import Optional, List, Union
+from pydantic import validator, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -40,23 +40,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Configuración de CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "https://localhost:3000",
-        "https://localhost:8000",
-    ]
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = "*"
     
     @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v) -> List[str]:
-        # Si es None, usar valores por defecto
-        if v is None:
-            return [
-                "http://localhost:3000",
-                "http://localhost:8000",
-                "https://localhost:3000",
-                "https://localhost:8000",
-            ]
+    def assemble_cors_origins(cls, v) -> Union[str, List[str]]:
+        # Si es None o string vacía, permitir todos los orígenes
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return "*"
         
         # Si es una lista, devolverla tal como está
         if isinstance(v, list):
@@ -64,15 +54,17 @@ class Settings(BaseSettings):
             
         # Si es string, procesarlo
         if isinstance(v, str):
-            # Caso especial para "*"
+            # Caso especial para "*" - devolver como string, no lista
             if v.strip() == "*":
-                return ["*"]
+                return "*"
             
             # Si parece JSON, intentar parsearlo
             if v.strip().startswith("[") and v.strip().endswith("]"):
                 try:
                     import json
-                    return json.loads(v.strip())
+                    parsed = json.loads(v.strip())
+                    if isinstance(parsed, list):
+                        return parsed
                 except (json.JSONDecodeError, ValueError):
                     # Si falla el JSON, tratar como string simple
                     pass
@@ -84,10 +76,10 @@ class Settings(BaseSettings):
                 if origin:
                     origins.append(origin)
             
-            return origins if origins else ["*"]
+            return origins if origins else "*"
         
         # Para cualquier otro tipo, convertir a string y procesar
-        return [str(v)]
+        return str(v)
     
     # Configuración de email (para recuperación de contraseña)
     SMTP_TLS: bool = True

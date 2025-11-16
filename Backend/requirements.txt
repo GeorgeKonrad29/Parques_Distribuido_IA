@@ -1,34 +1,35 @@
 # Framework Principal - Compatible con Python 3.11+
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-pydantic==2.6.1
-pydantic-settings==2.1.0
-python-socketio==5.11.1
+fastapi>=0.121.0
+uvicorn[standard]>=0.38.0
+pydantic>=2.12.0
+pydantic-settings>=2.12.0
+python-socketio>=5.14.0
 
 # Base de Datos
-sqlalchemy==2.0.23
-asyncpg==0.29.0
-alembic==1.12.1
-redis==5.0.1
+sqlalchemy>=2.0.44
+asyncpg>=0.30.0
+alembic>=1.17.0
+redis>=7.0.0
 
 # Autenticación y Seguridad
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-slowapi==0.1.9
+python-jose[cryptography]>=3.5.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.20
+slowapi>=0.1.9
 
-# Machine Learning e IA
-scikit-learn==1.4.0
-numpy==1.26.2
-pandas==2.1.4
-joblib==1.3.2
+# Machine Learning e IA (Opcional - requiere compilador C++ en Windows)
+# Para Windows sin Visual Studio, instalar wheels precompilados:
+# pip install scikit-learn numpy pandas -f https://download.pytorch.org/whl/torch_stable.html
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
+joblib>=1.3.0
 
 # Utilidades
-python-dotenv==1.0.0
-email-validator==2.1.0
-httpx==0.25.2
-aiofiles==23.2.1
-aiohttp==3.9.1
+python-dotenv>=1.2.0
+email-validator>=2.3.0
+httpx>=0.28.0
+aiofiles>=25.1.0
+aiohttp>=3.13.0
 
 # Testing
 pytest==7.4.3

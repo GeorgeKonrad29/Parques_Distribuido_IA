@@ -2,7 +2,30 @@
 
 Un juego de parques como sistema distribuido con un Bot IA avanzado, sistema de recomendaciones inteligente, comunicación en tiempo real y sincronización distribuida.
 
-## 🎮 Características Principales
+## Inicio Rápido
+
+### Ejecutar en Local (Windows)
+```powershell
+cd Backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install fastapi uvicorn[standard] pydantic pydantic-settings python-socketio sqlalchemy asyncpg alembic redis python-jose[cryptography] passlib[bcrypt] python-multipart slowapi
+pip install numpy pandas joblib python-dotenv email-validator httpx aiofiles aiohttp --only-binary :all:
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Guía detallada**: Ver [INSTALACION_LOCAL.md](INSTALACION_LOCAL.md)
+
+### Deploy en Render
+**Guía completa**: Ver [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
+
+**Variables de entorno requeridas en Render**:
+- `BACKEND_CORS_ORIGINS=*`
+- `DATABASE_URL=postgresql+asyncpg://...`
+- `SECRET_KEY=tu-clave-secreta`
+- `ENVIRONMENT=production`
+
+## Características Principales
 
 - **Motor de Juego Parqués Completo**: Implementación completa del juego tradicional colombiano
 - **Sistema de Autenticación JWT**: Registro, login y gestión de usuarios segura
