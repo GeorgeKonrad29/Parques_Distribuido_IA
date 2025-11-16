@@ -9,6 +9,7 @@ export const Dashboard: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    navigate('/');
   };
 
   const handlePlayNow = () => {
