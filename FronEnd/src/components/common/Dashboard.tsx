@@ -1,12 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Gamepad2, Trophy, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handlePlayNow = () => {
+    navigate('/games');
   };
 
   return (
@@ -63,7 +69,9 @@ export const Dashboard: React.FC = () => {
                 <p className="text-text-muted text-sm">Crear o unirse a una partida</p>
               </div>
             </div>
-            <button className="btn-success w-full">
+            <button 
+              onClick={handlePlayNow}
+              className="btn-success w-full">
               Jugar Ahora
             </button>
           </div>
