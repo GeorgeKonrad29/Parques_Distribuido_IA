@@ -4,7 +4,7 @@ Un juego de parques como sistema distribuido con un Bot IA avanzado, sistema de 
 
 ## Inicio Rápido
 
-### Ejecutar en Local (Windows)
+### Ejecutar Backend en Local (Windows)
 ```powershell
 cd Backend
 python -m venv venv
@@ -15,6 +15,46 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Guía detallada**: Ver [INSTALACION_LOCAL.md](INSTALACION_LOCAL.md)
+
+### Ejecutar Frontend (UI Interface)
+
+**Requisitos previos**:
+- Node.js 18+ o superior
+- pnpm (recomendado) o npm
+
+**Instalación y ejecución**:
+```bash
+cd FronEnd
+pnpm install
+pnpm dev
+```
+
+O con npm:
+```bash
+cd FronEnd
+npm install
+npm run dev
+```
+
+**Configuración**:
+1. Crea un archivo `.env` en `FronEnd/` basado en `.env.example`
+2. Configura la URL del backend:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
+
+**Acceso**:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Documentación API: http://localhost:8000/docs
+
+**Características del Frontend**:
+- Autenticación completa (Login/Register)
+- Dashboard de usuario
+- Sistema de rutas con React Router
+- Integración con API REST del backend
+- Diseño responsive
+- Componentes TypeScript tipados
 
 ### Deploy en Render
 **Guía completa**: Ver [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
@@ -35,7 +75,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - **Sincronización Distribuida**: Algoritmo Berkeley para coordinación temporal entre nodos
 - **API REST Completa**: Endpoints documentados para todas las funcionalidades
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ```
 Backend/
@@ -50,9 +90,22 @@ Backend/
 │   ├── recommendations/ # Motor de recomendaciones
 │   ├── distributed/     # Sincronización distribuida
 │   └── main.py          # Aplicación principal
+
+FronEnd/
+├── src/
+│   ├── components/
+│   │   ├── auth/        # Componentes de autenticación
+│   │   └── common/      # Componentes compartidos
+│   ├── hooks/           # Custom hooks de React
+│   ├── services/        # Servicios de API
+│   ├── types/           # Definiciones TypeScript
+│   ├── styles/          # Estilos CSS
+│   └── main.tsx         # Punto de entrada
+├── public/              # Recursos estáticos
+└── vite.config.ts       # Configuración de Vite
 ```
 
-## 🚀 Server
+## Backend - Servidor API
 
 ### Requisitos Previos
 
@@ -289,15 +342,253 @@ Respuesta:
 - **Métricas de sincronización**: Disponibles en `/api/v1/sync/metrics`
 - **Estado de WebSocket**: Disponible en `/api/v1/websocket/status`
 
-### 🛠️ Desarrollo
+### Desarrollo
 
 Para desarrollo del frontend, el servidor debe estar ejecutándose en `http://localhost:8000` con CORS habilitado para permitir conexiones desde el cliente.
 
-El servidor incluye:
+**Backend incluye**:
 - **Recarga automática** en modo desarrollo
 - **Documentación automática** en `/docs` (Swagger UI)
 - **Esquemas OpenAPI** en `/openapi.json`
 - **WebSocket testing** en `/ws-test`
+
+**Frontend incluye**:
+- **Hot Module Replacement (HMR)** con Vite
+- **TypeScript** para tipado estático
+- **React Router** para navegación
+- **ESLint** para linting
+- **Componentes reutilizables**
+
+### Consideraciones Importantes
+
+**Configuración de CORS**:
+- En desarrollo, el backend debe tener `BACKEND_CORS_ORIGINS=*` en `.env`
+- En producción, especificar los dominios permitidos
+
+**Puertos por defecto**:
+- Backend: `8000`
+- Frontend: `5173`
+
+**Variables de entorno**:
+- Backend: `Backend/.env`
+- Frontend: `FronEnd/.env`
+
+**Orden de ejecución**:
+1. Iniciar Backend primero
+2. Luego iniciar Frontend
+3. El Frontend se conectará automáticamente al Backend
+
+## Frontend - Interfaz de Usuario
+
+### Requisitos Previos
+
+- **Node.js 18+** o superior
+- **npm** o **pnpm** (recomendado)
+
+### Instalación y Configuración
+
+1. **Navegar al directorio del frontend**:
+```bash
+cd FronEnd
+```
+
+2. **Instalar dependencias**:
+```bash
+# Con npm
+npm install
+
+# O con pnpm (recomendado)
+pnpm install
+```
+
+3. **Configurar variables de entorno**:
+```bash
+# Crear archivo .env basado en .env.example
+cp .env.example .env
+```
+
+Contenido del `.env`:
+```env
+# URL del backend API
+VITE_API_URL=http://localhost:8000
+
+# Configuración de desarrollo
+VITE_NODE_ENV=development
+```
+
+4. **Ejecutar el servidor de desarrollo**:
+```bash
+# Con npm
+npm run dev
+
+# O con pnpm
+pnpm dev
+```
+
+El frontend estará disponible en: http://localhost:5173
+
+### Stack Tecnológico
+
+- **React 19** - Biblioteca UI
+- **TypeScript** - Tipado estático
+- **Vite** - Build tool y dev server
+- **React Router** - Navegación
+- **Lucide React** - Iconos
+
+### Estructura del Proyecto
+
+```
+FronEnd/
+├── src/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── AuthPage.tsx        # Página principal de autenticación
+│   │   │   ├── LoginForm.tsx       # Formulario de inicio de sesión
+│   │   │   └── RegisterForm.tsx    # Formulario de registro
+│   │   └── common/
+│   │       ├── Dashboard.tsx       # Panel principal del usuario
+│   │       └── Loading.tsx         # Componente de carga
+│   ├── hooks/
+│   │   └── useAuth.tsx             # Hook personalizado para autenticación
+│   ├── services/
+│   │   └── authService.ts          # Servicios de API para autenticación
+│   ├── types/
+│   │   ├── api.ts                  # Tipos para respuestas de API
+│   │   └── auth.ts                 # Tipos para autenticación
+│   ├── styles/
+│   │   └── globals.css             # Estilos globales
+│   ├── App.tsx                     # Componente raíz
+│   ├── main.tsx                    # Punto de entrada
+│   └── index.css                   # Estilos base
+├── public/                         # Recursos estáticos
+├── .env                            # Variables de entorno (local)
+├── .env.example                    # Plantilla de variables de entorno
+├── vite.config.ts                  # Configuración de Vite
+├── tsconfig.json                   # Configuración de TypeScript
+└── package.json                    # Dependencias y scripts
+```
+
+### Scripts Disponibles
+
+```bash
+# Desarrollo - Inicia servidor con HMR
+npm run dev
+
+# Build - Compila para producción
+npm run build
+
+# Preview - Vista previa del build de producción
+npm run preview
+
+# Lint - Ejecuta ESLint
+npm run lint
+```
+
+### Características Implementadas
+
+#### Autenticación
+- **Registro de usuarios**: Formulario completo con validación
+- **Inicio de sesión**: Login con email y contraseña
+- **Gestión de tokens**: Almacenamiento seguro de JWT
+- **Persistencia de sesión**: Mantiene sesión activa
+- **Cierre de sesión**: Limpieza de datos de usuario
+
+#### Interfaz
+- **Diseño responsive**: Adaptable a móviles y desktop
+- **Componentes reutilizables**: Arquitectura modular
+- **Tipado TypeScript**: Seguridad de tipos en toda la aplicación
+- **Navegación fluida**: React Router para rutas
+- **Estados de carga**: Feedback visual durante peticiones
+
+### Integración con Backend
+
+El frontend se comunica con el backend a través de la API REST:
+
+```typescript
+// Ejemplo de servicio de autenticación
+import { API_URL } from './config';
+
+export const authService = {
+  async login(email: string, password: string) {
+    const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+    return response.json();
+  },
+  
+  async register(userData: RegisterData) {
+    const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    return response.json();
+  }
+};
+```
+
+### Variables de Entorno
+
+| Variable | Descripción | Valor por defecto |
+|----------|-------------|-------------------|
+| `VITE_API_URL` | URL del backend API | `http://localhost:8000` |
+| `VITE_NODE_ENV` | Entorno de ejecución | `development` |
+
+### Desarrollo
+
+**Hot Module Replacement (HMR)**:
+- Cambios en componentes se reflejan instantáneamente
+- No es necesario recargar la página
+- Estado de la aplicación se mantiene
+
+**TypeScript**:
+- Autocompletado inteligente
+- Detección de errores en tiempo de desarrollo
+- Mejor experiencia de desarrollo
+
+**ESLint**:
+- Reglas configuradas para React y TypeScript
+- Detecta problemas de código automáticamente
+- Mantiene consistencia en el código
+
+### Build para Producción
+
+```bash
+# Compilar para producción
+npm run build
+
+# El resultado estará en: dist/
+# Archivos optimizados y minificados
+# Assets con hash para cache busting
+```
+
+### Troubleshooting Frontend
+
+**Error: Cannot connect to backend**
+- Verifica que el backend esté corriendo en `http://localhost:8000`
+- Revisa la variable `VITE_API_URL` en `.env`
+- Verifica CORS en el backend
+
+**Error: Module not found**
+```bash
+# Reinstalar dependencias
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Error: Port already in use**
+```bash
+# Vite usa puerto 5173 por defecto
+# Si está ocupado, Vite asignará uno automático
+# O especifica uno diferente:
+npm run dev -- --port 3000
+```
 
 ### 🔐 Autenticación
 
