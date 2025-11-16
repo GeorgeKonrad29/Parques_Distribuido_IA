@@ -33,9 +33,11 @@ Backend/
 
 ### Requisitos Previos
 
-- Python 3.8+
+- **Python 3.11.9** (RECOMENDADO - evita problemas de compatibilidad)
 - PostgreSQL
 - pip
+
+> ⚠️ **IMPORTANTE**: Python 3.13 tiene incompatibilidades con Pydantic. Use Python 3.11.9 o 3.12.x
 
 ### Instalación y Configuración
 
@@ -282,3 +284,56 @@ Authorization: Bearer <jwt_token>
 ```
 
 El token se obtiene mediante login y debe incluirse en todas las peticiones autenticadas y conexiones WebSocket.
+
+## 🔧 Troubleshooting
+
+### Error: `ForwardRef._evaluate() missing 1 required keyword-only argument: 'recursive_guard'`
+
+**Problema**: Python 3.13 incompatible con Pydantic 2.6.1
+
+**Solución**:
+1. **Opción 1 (Recomendada)**: Cambiar a Python 3.11.9
+   ```bash
+   # Con pyenv
+   pyenv install 3.11.9
+   pyenv local 3.11.9
+   
+   # Recrear entorno virtual
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # o
+   venv\Scripts\activate     # Windows
+   
+   pip install -r Backend/requirements.txt
+   ```
+
+2. **Opción 2**: Usar Python 3.12.x
+   ```bash
+   # Similar al anterior pero con 3.12.x
+   pyenv install 3.12.7
+   pyenv local 3.12.7
+   ```
+
+### Error: `ModuleNotFoundError: No module named 'socketio'`
+
+**Problema**: Falta instalar `python-socketio`
+
+**Solución**:
+```bash
+cd Backend
+pip install -r requirements.txt
+```
+
+### Para Render
+
+**Build Command**: `cd Backend && pip install -r requirements.txt`
+**Start Command**: `cd Backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+**Variables de entorno obligatorias**:
+```
+PYTHON_VERSION=3.11.9
+DATABASE_URL=postgresql+asyncpg://neondb_owner:npg_BjwQ2ZtsCnR5@ep-young-salad-a8nr0kos-pooler.eastus2.azure.neon.tech/neondb?ssl=require
+SECRET_KEY=tu-clave-secreta-super-segura-para-produccion-2024
+ENVIRONMENT=production
+DEBUG=false
+```
