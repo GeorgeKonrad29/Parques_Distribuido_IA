@@ -4,7 +4,7 @@ Un juego de parques como sistema distribuido con un Bot IA avanzado, sistema de 
 
 ## Inicio Rápido
 
-### Ejecutar en Local (Windows)
+### Ejecutar Backend en Local (Windows)
 ```powershell
 cd Backend
 python -m venv venv
@@ -15,6 +15,46 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Guía detallada**: Ver [INSTALACION_LOCAL.md](INSTALACION_LOCAL.md)
+
+### Ejecutar Frontend (UI Interface)
+
+**Requisitos previos**:
+- Node.js 18+ o superior
+- pnpm (recomendado) o npm
+
+**Instalación y ejecución**:
+```bash
+cd FronEnd
+pnpm install
+pnpm dev
+```
+
+O con npm:
+```bash
+cd FronEnd
+npm install
+npm run dev
+```
+
+**Configuración**:
+1. Crea un archivo `.env` en `FronEnd/` basado en `.env.example`
+2. Configura la URL del backend:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
+
+**Acceso**:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Documentación API: http://localhost:8000/docs
+
+**Características del Frontend**:
+- Autenticación completa (Login/Register)
+- Dashboard de usuario
+- Sistema de rutas con React Router
+- Integración con API REST del backend
+- Diseño responsive
+- Componentes TypeScript tipados
 
 ### Deploy en Render
 **Guía completa**: Ver [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
@@ -35,7 +75,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - **Sincronización Distribuida**: Algoritmo Berkeley para coordinación temporal entre nodos
 - **API REST Completa**: Endpoints documentados para todas las funcionalidades
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ```
 Backend/
@@ -50,6 +90,19 @@ Backend/
 │   ├── recommendations/ # Motor de recomendaciones
 │   ├── distributed/     # Sincronización distribuida
 │   └── main.py          # Aplicación principal
+
+FronEnd/
+├── src/
+│   ├── components/
+│   │   ├── auth/        # Componentes de autenticación
+│   │   └── common/      # Componentes compartidos
+│   ├── hooks/           # Custom hooks de React
+│   ├── services/        # Servicios de API
+│   ├── types/           # Definiciones TypeScript
+│   ├── styles/          # Estilos CSS
+│   └── main.tsx         # Punto de entrada
+├── public/              # Recursos estáticos
+└── vite.config.ts       # Configuración de Vite
 ```
 
 ## 🚀 Server
@@ -289,15 +342,41 @@ Respuesta:
 - **Métricas de sincronización**: Disponibles en `/api/v1/sync/metrics`
 - **Estado de WebSocket**: Disponible en `/api/v1/websocket/status`
 
-### 🛠️ Desarrollo
+### Desarrollo
 
 Para desarrollo del frontend, el servidor debe estar ejecutándose en `http://localhost:8000` con CORS habilitado para permitir conexiones desde el cliente.
 
-El servidor incluye:
+**Backend incluye**:
 - **Recarga automática** en modo desarrollo
 - **Documentación automática** en `/docs` (Swagger UI)
 - **Esquemas OpenAPI** en `/openapi.json`
 - **WebSocket testing** en `/ws-test`
+
+**Frontend incluye**:
+- **Hot Module Replacement (HMR)** con Vite
+- **TypeScript** para tipado estático
+- **React Router** para navegación
+- **ESLint** para linting
+- **Componentes reutilizables**
+
+### Consideraciones Importantes
+
+**Configuración de CORS**:
+- En desarrollo, el backend debe tener `BACKEND_CORS_ORIGINS=*` en `.env`
+- En producción, especificar los dominios permitidos
+
+**Puertos por defecto**:
+- Backend: `8000`
+- Frontend: `5173`
+
+**Variables de entorno**:
+- Backend: `Backend/.env`
+- Frontend: `FronEnd/.env`
+
+**Orden de ejecución**:
+1. Iniciar Backend primero
+2. Luego iniciar Frontend
+3. El Frontend se conectará automáticamente al Backend
 
 ### 🔐 Autenticación
 
