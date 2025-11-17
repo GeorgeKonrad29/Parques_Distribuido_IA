@@ -5,6 +5,7 @@ import { AuthPage } from './components/auth/AuthPage';
 import { Dashboard } from './components/common/Dashboard';
 import { GameList } from './components/game/GameList';
 import { CreateGame } from './components/game/CreateGame';
+import { GameBoard } from './components/game/GameBoard';
 import { Loading } from './components/common/Loading';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,6 +60,15 @@ const AppContent: React.FC = () => {
               <CreateGame />
             </ProtectedRoute>
           } 
+        />
+
+        <Route
+          path="/game/:gameId"
+          element={
+            <ProtectedRoute>
+              <GameBoard />
+            </ProtectedRoute>
+          }
         />
 
         {/* Redirección por defecto */}

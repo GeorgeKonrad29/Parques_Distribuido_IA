@@ -13,10 +13,10 @@ export const CreateGame: React.FC = () => {
     maxPlayers: 4,
     isPrivate: false,
     password: '',
-    creatorColor: 'RED',
+    creatorColor: 'red',
   });
 
-  const colors = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
+  const colors = ['red', 'blue', 'green', 'yellow'];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -59,10 +59,8 @@ export const CreateGame: React.FC = () => {
         creator_color: formData.creatorColor,
       };
 
-      await gameService.createGame(createRequest);
-      
-      // Navegar a la lista de juegos después de crear
-      navigate('/games');
+      const newGame = await gameService.createGame(createRequest);
+      navigate(`/game/${newGame.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el juego');
       console.error('Error creating game:', err);
@@ -160,7 +158,7 @@ export const CreateGame: React.FC = () => {
                         : 'bg-bg-primary border border-surface text-text-primary hover:border-parques-blue'
                     }`}
                   >
-                    {color === 'RED' ? '🔴' : color === 'BLUE' ? '🔵' : color === 'GREEN' ? '🟢' : '🟡'}
+                    {color === 'red' ? '🔴' : color === 'blue' ? '🔵' : color === 'green' ? '🟢' : '🟡'}
                   </button>
                 ))}
               </div>
