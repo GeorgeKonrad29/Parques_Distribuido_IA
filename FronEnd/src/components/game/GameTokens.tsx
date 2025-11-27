@@ -1,7 +1,20 @@
 import React from 'react';
-import { type GameState, type Piece, type Player } from '../../services/gameService';
+import { type GameState, type Piece, type Player } from '../../types/game';
+import styles from './GameTokens.module.css';
 
-const GameTokens: React.FC<{ gameState: GameState }> = ({ gameState }) => {
+interface BoardDimensions {
+  containerWidth: number;
+  containerHeight: number;
+  imageWidth: number;
+  imageHeight: number;
+  imageX: number;
+  imageY: number;
+}
+
+const GameTokens: React.FC<{ 
+  gameState: GameState;
+  boardDimensions: BoardDimensions;
+}> = ({ gameState, boardDimensions }) => {
   const BOARD_SIZE = 68;
   const GOAL_POSITIONS = 8;
 
@@ -145,18 +158,27 @@ const GameTokens: React.FC<{ gameState: GameState }> = ({ gameState }) => {
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
     const pieceNumber = piece.id.split('-').pop()?.slice(-1) || '?';
 
+    // Si no tenemos dimensiones de la imagen, no renderizar
+    if (boardDimensions.imageWidth === 0 || boardDimensions.imageHeight === 0) {
+      return null;
+    }
+
+    // Convertir coordenadas porcentuales a posición absoluta sobre la imagen
+    const absoluteX = boardDimensions.imageX + (x / 100) * boardDimensions.imageWidth;
+    const absoluteY = boardDimensions.imageY + (y / 100) * boardDimensions.imageHeight;
+
     return (
       <div
         key={piece.id}
-        className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
+        className={styles.token}
         style={{
-          left: `${x}%`,
-          top: `${y}%`,
+          left: `${absoluteX}px`,
+          top: `${absoluteY}px`,
         }}
-        title={`${player.name} - Ficha ${pieceNumber} - Pos: ${piece.position}`}
+        title={`${player.name} - Ficha ${pieceNumber} - Pos: ${piece.position} - Coords: (${Math.round(absoluteX)}, ${Math.round(absoluteY)})`}
       >
         <div
-          className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shadow-lg cursor-pointer hover:scale-110 transition-transform"
+          className={styles['token-inner']}
           style={{
             backgroundColor: color.bg,
             borderColor: color.border,
@@ -172,7 +194,7 @@ const GameTokens: React.FC<{ gameState: GameState }> = ({ gameState }) => {
   const piecesWithCoords = getAllPiecesWithCoords();
 
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div className={styles['tokens-overlay']}>
       {piecesWithCoords.map(({ piece, player, x, y }) =>
         renderPiece(piece, player, x, y)
       )}

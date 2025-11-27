@@ -1,0 +1,34 @@
+.token {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.token-inner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border-width: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.token-inner:hover {
+  transform: scale(1.1);
+}
+
+.tokens-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tokens-overlay > * {
+  pointer-events: auto;
+}

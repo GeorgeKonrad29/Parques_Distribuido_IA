@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Users, Dice5, Crown } from 'lucide-react';
-import { gameService, type GameState, type Player } from '../../services/gameService';
+import { gameService} from '../../services/gameService';
+import { type GameState, type Player } from '../../types/game';
 import { Loading } from '../common/Loading';
 import GameTokens from './GameTokens';
 import tableroImage from './tablero.jpeg';
@@ -235,21 +236,122 @@ export default GameBoard;
 
 // Componente del tablero visual de Parqués
 const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
+  const boardRef = React.useRef<HTMLDivElement>(null);
+  const [boardDimensions, setBoardDimensions] = useState({
+    containerWidth: 0,
+    containerHeight: 0,
+    imageWidth: 0,
+    imageHeight: 0,
+    imageX: 0,
+    imageY: 0,
+  });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (boardRef.current) {
+        const container = boardRef.current;
+        const containerRect = container.getBoundingClientRect();
+        
+        // Crear una imagen temporal para obtener dimensiones naturales
+        const img = new Image();
+        img.src = tableroImage;
+        
+        img.onload = () => {
+          const containerWidth = containerRect.width;
+          const containerHeight = containerRect.height;
+          
+          // Calcular dimensiones con 'contain'
+          const imageAspectRatio = img.naturalWidth / img.naturalHeight;
+          const containerAspectRatio = containerWidth / containerHeight;
+          
+          let imageWidth, imageHeight, imageX, imageY;
+          
+          if (containerAspectRatio > imageAspectRatio) {
+            // El contenedor es más ancho, la imagen se ajusta por altura
+            imageHeight = containerHeight;
+            imageWidth = imageHeight * imageAspectRatio;
+            imageX = (containerWidth - imageWidth) / 2;
+            imageY = 0;
+          } else {
+            // El contenedor es más alto, la imagen se ajusta por ancho
+            imageWidth = containerWidth;
+            imageHeight = imageWidth / imageAspectRatio;
+            imageX = 0;
+            imageY = (containerHeight - imageHeight) / 2;
+          }
+          
+          setBoardDimensions({
+            containerWidth,
+            containerHeight,
+            imageWidth,
+            imageHeight,
+            imageX,
+            imageY,
+          });
+        };
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   return (
-    <div
-      className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-2xl border-4 border-amber-800"
-      style={{
-        backgroundImage: `url(${tableroImage})`,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        minHeight: '500px',
-        imageRendering: 'auto'
-      }}
-    >
-      {/* Capa para las fichas */}
-      <GameTokens gameState={gameState} />
+    <div className="space-y-4">
+      {/* Panel de información de dimensiones */}
+      <div className="bg-bg-secondary p-4 rounded-lg border border-border">
+        <h3 className="text-sm font-semibold text-text-primary mb-2">📐 Información del Tablero</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs text-text-secondary">
+          <div>
+            <span className="font-medium">Contenedor:</span>
+            <p>{Math.round(boardDimensions.containerWidth)} × {Math.round(boardDimensions.containerHeight)} px</p>
+          </div>
+          <div>
+            <span className="font-medium">Imagen:</span>
+            <p>{Math.round(boardDimensions.imageWidth)} × {Math.round(boardDimensions.imageHeight)} px</p>
+          </div>
+          <div>
+            <span className="font-medium">Posición (X, Y):</span>
+            <p>({Math.round(boardDimensions.imageX)}, {Math.round(boardDimensions.imageY)}) px</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tablero con overlay visual */}
+      <div
+        ref={boardRef}
+        className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-2xl border-4 border-amber-800"
+        style={{
+          backgroundImage: `url(${tableroImage})`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          minHeight: '500px',
+          imageRendering: 'auto'
+        }}
+      >
+        {/* Visualización del área de la imagen */}
+        {boardDimensions.imageWidth > 0 && (
+          <div
+            className="absolute border-2 border-dashed border-blue-500 pointer-events-none"
+            style={{
+              left: `${boardDimensions.imageX}px`,
+              top: `${boardDimensions.imageY}px`,
+              width: `${boardDimensions.imageWidth}px`,
+              height: `${boardDimensions.imageHeight}px`,
+            }}
+          >
+            <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br">
+              Imagen del Tablero
+            </div>
+          </div>
+        )}
+        
+        {/* Capa para las fichas */}
+        <GameTokens gameState={gameState} boardDimensions={boardDimensions} />
+      </div>
     </div>
   );
 };
