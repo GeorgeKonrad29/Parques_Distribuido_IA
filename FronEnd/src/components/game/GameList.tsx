@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Users, Calendar, Lock, Globe } from 'lucide-react';
+import { ArrowLeft, Play, Users, Calendar, Lock, Globe, X } from 'lucide-react';
 import { gameService } from '../../services/gameService';
-import type { Game } from '../../services/gameService';
+import type { Game } from '../../types/game';
 import { Loading } from '../common/Loading';
+import styles from './GameList.module.css';
+
+type PlayerColor = 'red' | 'blue' | 'yellow' | 'green';
 
 export const GameList: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +14,9 @@ export const GameList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joiningGameId, setJoiningGameId] = useState<string | null>(null);
+  const [showColorModal, setShowColorModal] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<{ id: string; isPrivate: boolean } | null>(null);
+  const [selectedColor, setSelectedColor] = useState<PlayerColor | null>(null);
 
   useEffect(() => {
     fetchAvailableGames();
@@ -31,23 +37,38 @@ export const GameList: React.FC = () => {
   };
 
   const handleJoinGame = async (gameId: string, isPrivate: boolean) => {
+    setSelectedGame({ id: gameId, isPrivate });
+    setShowColorModal(true);
+  };
+
+  const confirmJoinGame = async () => {
+    if (!selectedGame || !selectedColor) return;
+
     try {
-      setJoiningGameId(gameId);
+      setJoiningGameId(selectedGame.id);
       
-      // Por ahora usaremos un color por defecto
       const joinRequest = {
-        color: 'RED',
-        password: isPrivate ? prompt('Ingresa la contraseña del juego:') || undefined : undefined,
+        color: selectedColor,
+        password: selectedGame.isPrivate ? prompt('Ingresa la contraseña del juego:') || undefined : undefined,
       };
 
-      await gameService.joinGame(gameId, joinRequest);
-      navigate(`/game/${gameId}`);
+      await gameService.joinGame(selectedGame.id, joinRequest);
+      setShowColorModal(false);
+      setSelectedGame(null);
+      setSelectedColor(null);
+      navigate(`/game/${selectedGame.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al unirse al juego');
       console.error('Error joining game:', err);
     } finally {
       setJoiningGameId(null);
     }
+  };
+
+  const cancelColorSelection = () => {
+    setShowColorModal(false);
+    setSelectedGame(null);
+    setSelectedColor(null);
   };
 
   const handleCreateGame = () => {
@@ -84,6 +105,72 @@ export const GameList: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Modal de Selección de Color */}
+      {showColorModal && (
+        <div className={styles.colorModal}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Selecciona tu color</h2>
+              <button onClick={cancelColorSelection} className={styles.closeButton}>
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className={styles.colorGrid}>
+              {(['red', 'blue', 'yellow', 'green'] as PlayerColor[]).map((color) => {
+                const colorStyles = {
+                  red: { bg: '#ef4444', border: '#dc2626', text: '#ffffff' },
+                  blue: { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' },
+                  yellow: { bg: '#eab308', border: '#ca8a04', text: '#1f2937' },
+                  green: { bg: '#22c55e', border: '#16a34a', text: '#ffffff' },
+                };
+                const colorNames = {
+                  red: 'Rojo',
+                  blue: 'Azul',
+                  yellow: 'Amarillo',
+                  green: 'Verde',
+                };
+                
+                const style = colorStyles[color];
+                const isSelected = selectedColor === color;
+
+                return (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`${styles.colorButton} ${isSelected ? styles.selected : ''}`}
+                    style={{
+                      backgroundColor: style.bg,
+                      borderColor: style.border,
+                      color: style.text,
+                      boxShadowColor: isSelected ? style.border : undefined,
+                    }}
+                  >
+                    <div className={styles.colorCircle}>
+                      <div className={styles.colorDot}>●</div>
+                      <div className={styles.colorName}>{colorNames[color]}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button onClick={cancelColorSelection} className={styles.cancelButton}>
+                Cancelar
+              </button>
+              <button
+                onClick={confirmJoinGame}
+                disabled={!selectedColor || joiningGameId !== null}
+                className={`btn-primary ${styles.confirmButton}`}
+              >
+                {joiningGameId ? 'Uniéndose...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

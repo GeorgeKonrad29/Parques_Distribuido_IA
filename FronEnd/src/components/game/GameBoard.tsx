@@ -6,6 +6,7 @@ import { type GameState, type Player } from '../../types/game';
 import { Loading } from '../common/Loading';
 import GameTokens from './GameTokens';
 import tableroImage from './tablero.jpeg';
+import styles from './GameBoard.module.css';
 
 export const GameBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -43,36 +44,23 @@ export const GameBoard: React.FC = () => {
   const renderPlayerCard = (player: Player) => {
     const isCurrentTurn = gameState?.current_player_id === player.id;
     return (
-      <div
-        key={player.id}
-        className={`card border ${
-          isCurrentTurn ? 'border-info/60 shadow-info/20 shadow-lg' : 'border-transparent'
-        }`}
-      >
-        <div className="flex items-center justify-between">
+      <div key={player.id} className={`card border ${isCurrentTurn ? styles.activeTurn : 'border-transparent'}`}>
+        <div className={styles.playerCardHeader}>
           <div>
-            <p className="text-lg font-semibold text-text-primary">{player.name}</p>
-            <p className="text-sm text-text-secondary capitalize">
-              Color: {player.color.toLowerCase()}
-            </p>
+            <p className={styles.playerCardName}>{player.name}</p>
+            <p className={styles.playerCardColor}>Color: {player.color.toLowerCase()}</p>
           </div>
           {isCurrentTurn && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-info/10 text-info">
-              Turno actual
-            </span>
+            <span className={styles.currentTurnBadge}>Turno actual</span>
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className={styles.piecesInfo}>
           {player.pieces.map((piece) => (
-            <div key={piece.id} className="bg-bg-secondary rounded-lg p-3">
-              <p className="text-sm text-text-secondary">Ficha {piece.id.split('-').pop()}</p>
-              <p className="text-sm font-semibold text-text-primary">
-                Posición: {piece.position}
-              </p>
-              <span className="text-xs text-text-secondary capitalize">
-                Estado: {piece.status.toLowerCase()}
-              </span>
+            <div key={piece.id} className={styles.pieceCard}>
+              <p className={styles.pieceLabel}>Ficha {piece.id.split('-').pop()}</p>
+              <p className={styles.piecePosition}>Posición: {piece.position}</p>
+              <span className={styles.pieceStatus}>Estado: {piece.status.toLowerCase()}</span>
             </div>
           ))}
         </div>
@@ -85,29 +73,23 @@ export const GameBoard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <header className="bg-bg-secondary border-b border-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/games')}
-                className="p-2 hover:bg-bg-primary rounded-lg transition"
-              >
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.headerInner}>
+            <div className={styles.headerLeft}>
+              <button onClick={() => navigate('/games')} className={styles.backButton}>
                 <ArrowLeft className="w-5 h-5 text-text-primary" />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-text-primary">Tablero de Juego</h1>
+                <h1 className={styles.headerTitle}>Tablero de Juego</h1>
                 {gameState && (
-                  <p className="text-sm text-text-secondary">Juego #{gameState.id}</p>
+                  <p className={styles.headerSubtitle}>Juego #{gameState.id}</p>
                 )}
               </div>
             </div>
 
-            <button
-              onClick={fetchGameState}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-bg-primary transition"
-            >
+            <button onClick={fetchGameState} className={styles.refreshButton}>
               <RefreshCw className="w-4 h-4" />
               <span>Actualizar</span>
             </button>
@@ -115,35 +97,33 @@ export const GameBoard: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className={styles.main}>
         {error && (
-          <div className="p-4 bg-error/10 border border-error rounded-lg text-error">
-            {error}
-          </div>
+          <div className={styles.errorAlert}>{error}</div>
         )}
 
         {gameState ? (
-          <>
-            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="card lg:col-span-2">
-                <div className="flex items-center justify-between mb-6">
+          <div className={styles.mainContent}>
+            <section className={styles.gridSection}>
+              <div className={`card ${styles.boardCard}`}>
+                <div className={styles.boardHeader}>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-primary">Estado Actual</h2>
-                    <p className="text-text-secondary">
+                    <h2 className={styles.boardTitle}>Estado Actual</h2>
+                    <p className={styles.boardSubtitle}>
                       Último dado: {gameState.last_dice_value ?? 'Aún no lanzado'}
                     </p>
                   </div>
-                  <div className="flex space-x-3">
-                    <div className="flex items-center space-x-2">
+                  <div className={styles.boardStats}>
+                    <div className={styles.statItem}>
                       <Users className="w-4 h-4 text-text-secondary" />
-                      <span className="text-sm text-text-secondary">
+                      <span className={styles.statText}>
                         {gameState.players.length} jugadores
                       </span>
                     </div>
                     {gameState.winner_id && (
-                      <div className="flex items-center space-x-2 text-success">
+                      <div className={styles.winnerBadge}>
                         <Crown className="w-4 h-4" />
-                        <span className="text-sm">
+                        <span className={styles.winnerText}>
                           Ganador:{' '}
                           {gameState.players.find((p) => p.id === gameState.winner_id)?.name ??
                             'Desconocido'}
@@ -156,31 +136,29 @@ export const GameBoard: React.FC = () => {
                 <ParquesBoard gameState={gameState} />
               </div>
 
-              <div className="space-y-4">
-                <div className="card">
-                  <h2 className="text-xl font-semibold text-text-primary mb-4">Jugadores</h2>
-                  <div className="space-y-3">
+              <div className={styles.sidebar}>
+                <div className={`card ${styles.playersCard}`}>
+                  <h2 className={styles.playersTitle}>Jugadores</h2>
+                  <div className={styles.playersList}>
                     {gameState.players.map((player) => (
                       <div
                         key={player.id}
-                        className={`p-4 rounded-lg border ${
-                          gameState.current_player_id === player.id
-                            ? 'border-info'
-                            : 'border-border'
+                        className={`${styles.playerItem} ${
+                          gameState.current_player_id === player.id ? styles.currentTurn : ''
                         }`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className={styles.playerHeader}>
                           <div>
-                            <p className="font-semibold text-text-primary">{player.name}</p>
-                            <span className="text-xs text-text-secondary">
+                            <p className={styles.playerName}>{player.name}</p>
+                            <span className={styles.playerColor}>
                               Color: {player.color}
                             </span>
                           </div>
                           {gameState.current_player_id === player.id && (
-                            <span className="text-xs text-info">En turno</span>
+                            <span className={styles.turnBadge}>En turno</span>
                           )}
                         </div>
-                        <p className="text-sm text-text-secondary mt-2">
+                        <p className={styles.playerPieces}>
                           Piezas activas: {player.pieces.filter((p) => p.status === 'board' || p.status === 'safe_zone').length}
                         </p>
                       </div>
@@ -188,24 +166,24 @@ export const GameBoard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="card">
-                  <h2 className="text-xl font-semibold text-text-primary mb-4">Detalles del Juego</h2>
-                  <div className="space-y-3 text-sm text-text-secondary">
-                    <div className="flex justify-between">
-                      <span>Estado:</span>
-                      <span className="capitalize">{gameState.status.replace('_', ' ')}</span>
+                <div className={`card ${styles.detailsCard}`}>
+                  <h2 className={styles.detailsTitle}>Detalles del Juego</h2>
+                  <div className={styles.detailsList}>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Estado:</span>
+                      <span className={styles.detailValue}>{gameState.status.replace('_', ' ')}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Último turno:</span>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Último turno:</span>
                       <span>
                         {gameState.current_player_id
                           ? gameState.players.find((p) => p.id === gameState.current_player_id)?.name
                           : 'Sin turno activo'}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Último dado lanzado:</span>
-                      <div className="flex items-center space-x-2">
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Último dado lanzado:</span>
+                      <div className={styles.diceValue}>
                         <Dice5 className="w-4 h-4 text-text-secondary" />
                         <span>{gameState.last_dice_value ?? '—'}</span>
                       </div>
@@ -215,15 +193,15 @@ export const GameBoard: React.FC = () => {
               </div>
             </section>
 
-            <section className="card">
-              <h2 className="text-xl font-semibold text-text-primary mb-4">Piezas por Jugador</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <section className={`card ${styles.piecesSection}`}>
+              <h2 className={styles.piecesTitle}>Piezas por Jugador</h2>
+              <div className={styles.piecesGrid}>
                 {gameState.players.map((player) => renderPlayerCard(player))}
               </div>
             </section>
-          </>
+          </div>
         ) : (
-          <div className="text-center py-16 text-text-secondary">
+          <div className={styles.emptyState}>
             No se pudo cargar el estado del juego. Intenta nuevamente.
           </div>
         )}
@@ -386,50 +364,21 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
   }, []);
 
   return (
-    <div className="space-y-4">
-      {/* Panel de información de dimensiones */}
-      <div className="bg-bg-secondary p-4 rounded-lg border border-border">
-        <h3 className="text-sm font-semibold text-text-primary mb-2">📐 Información del Tablero</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs text-text-secondary">
-          <div>
-            <span className="font-medium">Contenedor:</span>
-            <p>{Math.round(boardDimensions.containerWidth)} × {Math.round(boardDimensions.containerHeight)} px</p>
-            <p className="text-[10px]">Pos pantalla: ({Math.round(boardDimensions.containerLeft)}, {Math.round(boardDimensions.containerTop)})</p>
-          </div>
-          <div>
-            <span className="font-medium">Imagen:</span>
-            <p>{Math.round(boardDimensions.imageWidth)} × {Math.round(boardDimensions.imageHeight)} px</p>
-            <p className="text-[10px]">Pos en contenedor: ({Math.round(boardDimensions.imageX)}, {Math.round(boardDimensions.imageY)})</p>
-          </div>
-          <div>
-            <span className="font-medium">Posición en pantalla:</span>
-            <p>({Math.round(boardDimensions.imageScreenX)}, {Math.round(boardDimensions.imageScreenY)}) px</p>
-          </div>
-        </div>
-      </div>
-
+    <div className={styles.boardWrapper}>
       {/* Tablero con overlay visual */}
       <div
         ref={boardRef}
-        className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-2xl border-4 border-amber-800"
+        className={`${styles.boardContainer} ${isDragging ? styles.grabbing : styles.grab}`}
         style={{
           backgroundImage: `url(${tableroImage})`,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
-          minHeight: '500px',
-          imageRendering: 'auto',
           transform: `translate3d(${pan.x}px, ${pan.y}px, 0)`,
-          cursor: isDragging ? 'grabbing' : 'grab',
-          touchAction: 'none',
-          userSelect: 'none'
         }}
         onPointerDown={onPointerDown}
       >
         {/* Visualización del área de la imagen */}
         {boardDimensions.imageWidth > 0 && (
           <div
-            className="absolute border-2 border-dashed border-blue-500 pointer-events-none"
+            className={styles.imageOverlay}
             style={{
               left: `${boardDimensions.imageX}px`,
               top: `${boardDimensions.imageY}px`,
@@ -437,9 +386,6 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
               height: `${boardDimensions.imageHeight}px`,
             }}
           >
-            <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br">
-              Imagen del Tablero
-            </div>
           </div>
         )}
 

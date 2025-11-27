@@ -58,28 +58,30 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
   const getHomePositionCoords = (color: string, pieceIndex: number): { x: number; y: number } => {
     const homePositions: Record<string, { x: number; y: number }[]> = {
       RED: [
-        { x: 8, y: 8 },   // Top-left corner
-        { x: 8, y: 4 },
-        { x: 4, y: 8 },
-        { x: 4, y: 4 },
+        { x: 21, y: 21 },   // Top-left corner
+        { x: 8, y: 21 },
+        { x: 8, y: 8 },
+        { x: 21, y: 8 },
       ],
       GREEN: [
-        { x: 92, y: 8 },  // Top-right corner
-        { x: 96, y: 8 },
-        { x: 92, y: 4 },
-        { x: 96, y: 4 },
+        { x: 79, y: 7 },  // top-right corner
+        { x: 79, y: 20 },
+        { x: 93, y: 20 },
+        { x: 93, y: 7 },
+        
       ],
       YELLOW: [
-        { x: 8, y: 92 },  // Bottom-left corner
-        { x: 8, y: 96 },
-        { x: 4, y: 92 },
-        { x: 4, y: 96 },
+        { x: 20, y: 79 },  // Bottom-left corner
+        { x: 20, y: 92 },
+        { x: 7, y: 92 },
+        { x: 7, y: 79 },
       ],
       BLUE: [
-        { x: 92, y: 92 }, // Bottom-right corner
-        { x: 96, y: 92 },
-        { x: 92, y: 96 },
-        { x: 96, y: 96 },
+        { x: 80, y: 80 },  // Bottom-right corner
+        { x: 80, y: 93 },
+        { x: 93, y: 93 },
+        { x: 93, y: 80 },
+        
       ],
     };
 
@@ -160,6 +162,13 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
     const absoluteX = boardDimensions.imageX + (x / 100) * boardDimensions.imageWidth;
     const absoluteY = boardDimensions.imageY + (y / 100) * boardDimensions.imageHeight;
 
+    // Tamaño de ficha proporcional al tamaño de la imagen
+    const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);
+    const TOKEN_SIZE_PERCENT = 3.2; // porcentaje del lado menor de la imagen
+    const tokenSize = Math.max(12, Math.round((baseSide * TOKEN_SIZE_PERCENT) / 100));
+    const borderPx = Math.max(1, Math.round(tokenSize * 0.12));
+    const fontPx = Math.max(8, Math.round(tokenSize * 0.42));
+
     return (
       <div
         key={piece.id}
@@ -169,7 +178,15 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
       >
         <div
           className={styles['token-inner']}
-          style={{ backgroundColor: color.bg, borderColor: color.border, color: color.text }}
+          style={{
+            backgroundColor: color.bg,
+            borderColor: color.border,
+            color: color.text,
+            width: `${tokenSize}px`,
+            height: `${tokenSize}px`,
+            borderWidth: `${borderPx}px`,
+            fontSize: `${fontPx}px`,
+          }}
         >
           {pieceNumber}
         </div>
