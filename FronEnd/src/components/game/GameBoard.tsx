@@ -237,6 +237,9 @@ export default GameBoard;
 // Componente del tablero visual de Parqués
 const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
   const boardRef = React.useRef<HTMLDivElement>(null);
+  const dragRef = React.useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [boardDimensions, setBoardDimensions] = useState({
     containerWidth: 0,
     containerHeight: 0,
@@ -244,58 +247,142 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
     imageHeight: 0,
     imageX: 0,
     imageY: 0,
+    containerLeft: 0,
+    containerTop: 0,
+    imageScreenX: 0,
+    imageScreenY: 0,
   });
 
+  // Handlers de arrastre (drag-to-pan)
   useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragRef.current.dragging) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPan({ x: dragRef.current.originX + dx, y: dragRef.current.originY + dy });
+    };
+
+    const onPointerUp = () => {
+      if (!dragRef.current.dragging) return;
+      dragRef.current.dragging = false;
+      setIsDragging(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+    };
+
+    // Cleanup defensivo si el componente se desmonta durante el drag
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Ignorar clicks con botones distintos al primario
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragRef.current.dragging = true;
+    dragRef.current.startX = e.clientX;
+    dragRef.current.startY = e.clientY;
+    dragRef.current.originX = pan.x;
+    dragRef.current.originY = pan.y;
+    setIsDragging(true);
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    const onPointerMove = (evt: PointerEvent) => {
+      if (!dragRef.current.dragging) return;
+      const dx = evt.clientX - dragRef.current.startX;
+      const dy = evt.clientY - dragRef.current.startY;
+      setPan({ x: dragRef.current.originX + dx, y: dragRef.current.originY + dy });
+    };
+    const onPointerUp = () => {
+      dragRef.current.dragging = false;
+      setIsDragging(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+    };
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  };
+
+  useEffect(() => {
+    let ro: ResizeObserver | null = null;
+
     const updateDimensions = () => {
-      if (boardRef.current) {
-        const container = boardRef.current;
-        const containerRect = container.getBoundingClientRect();
-        
-        // Crear una imagen temporal para obtener dimensiones naturales
-        const img = new Image();
-        img.src = tableroImage;
-        
-        img.onload = () => {
-          const containerWidth = containerRect.width;
-          const containerHeight = containerRect.height;
-          
-          // Calcular dimensiones con 'contain'
-          const imageAspectRatio = img.naturalWidth / img.naturalHeight;
-          const containerAspectRatio = containerWidth / containerHeight;
-          
-          let imageWidth, imageHeight, imageX, imageY;
-          
-          if (containerAspectRatio > imageAspectRatio) {
-            // El contenedor es más ancho, la imagen se ajusta por altura
-            imageHeight = containerHeight;
-            imageWidth = imageHeight * imageAspectRatio;
-            imageX = (containerWidth - imageWidth) / 2;
-            imageY = 0;
-          } else {
-            // El contenedor es más alto, la imagen se ajusta por ancho
-            imageWidth = containerWidth;
-            imageHeight = imageWidth / imageAspectRatio;
-            imageX = 0;
-            imageY = (containerHeight - imageHeight) / 2;
-          }
-          
-          setBoardDimensions({
-            containerWidth,
-            containerHeight,
-            imageWidth,
-            imageHeight,
-            imageX,
-            imageY,
-          });
-        };
-      }
+      if (!boardRef.current) return;
+
+      const container = boardRef.current;
+      const containerRect = container.getBoundingClientRect();
+
+      // Crear una imagen temporal para obtener dimensiones naturales
+      const img = new Image();
+      img.src = tableroImage;
+
+      img.onload = () => {
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
+        const containerLeft = containerRect.left + window.scrollX;
+        const containerTop = containerRect.top + window.scrollY;
+
+        // Calcular dimensiones con 'contain'
+        const imageAspectRatio = img.naturalWidth / img.naturalHeight;
+        const containerAspectRatio = containerWidth / containerHeight;
+
+        let imageWidth = 0,
+          imageHeight = 0,
+          imageX = 0,
+          imageY = 0;
+
+        if (containerAspectRatio > imageAspectRatio) {
+          // El contenedor es más ancho, la imagen se ajusta por altura
+          imageHeight = containerHeight;
+          imageWidth = imageHeight * imageAspectRatio;
+          imageX = (containerWidth - imageWidth) / 2;
+          imageY = 0;
+        } else {
+          // El contenedor es más alto, la imagen se ajusta por ancho
+          imageWidth = containerWidth;
+          imageHeight = imageWidth / imageAspectRatio;
+          imageX = 0;
+          imageY = (containerHeight - imageHeight) / 2;
+        }
+
+        const imageScreenX = containerLeft + imageX;
+        const imageScreenY = containerTop + imageY;
+
+        setBoardDimensions({
+          containerWidth,
+          containerHeight,
+          imageWidth,
+          imageHeight,
+          imageX,
+          imageY,
+          containerLeft,
+          containerTop,
+          imageScreenX,
+          imageScreenY,
+        });
+      };
     };
 
     updateDimensions();
+
+    if (window.ResizeObserver) {
+      ro = new ResizeObserver(updateDimensions);
+      if (boardRef.current) ro.observe(boardRef.current);
+    }
+
     window.addEventListener('resize', updateDimensions);
-    
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener('scroll', updateDimensions, { passive: true });
+
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('scroll', updateDimensions);
+    };
   }, []);
 
   return (
@@ -307,14 +394,16 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
           <div>
             <span className="font-medium">Contenedor:</span>
             <p>{Math.round(boardDimensions.containerWidth)} × {Math.round(boardDimensions.containerHeight)} px</p>
+            <p className="text-[10px]">Pos pantalla: ({Math.round(boardDimensions.containerLeft)}, {Math.round(boardDimensions.containerTop)})</p>
           </div>
           <div>
             <span className="font-medium">Imagen:</span>
             <p>{Math.round(boardDimensions.imageWidth)} × {Math.round(boardDimensions.imageHeight)} px</p>
+            <p className="text-[10px]">Pos en contenedor: ({Math.round(boardDimensions.imageX)}, {Math.round(boardDimensions.imageY)})</p>
           </div>
           <div>
-            <span className="font-medium">Posición (X, Y):</span>
-            <p>({Math.round(boardDimensions.imageX)}, {Math.round(boardDimensions.imageY)}) px</p>
+            <span className="font-medium">Posición en pantalla:</span>
+            <p>({Math.round(boardDimensions.imageScreenX)}, {Math.round(boardDimensions.imageScreenY)}) px</p>
           </div>
         </div>
       </div>
@@ -329,8 +418,13 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
           minHeight: '500px',
-          imageRendering: 'auto'
+          imageRendering: 'auto',
+          transform: `translate3d(${pan.x}px, ${pan.y}px, 0)`,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: 'none',
+          userSelect: 'none'
         }}
+        onPointerDown={onPointerDown}
       >
         {/* Visualización del área de la imagen */}
         {boardDimensions.imageWidth > 0 && (
@@ -348,7 +442,7 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
             </div>
           </div>
         )}
-        
+
         {/* Capa para las fichas */}
         <GameTokens gameState={gameState} boardDimensions={boardDimensions} />
       </div>

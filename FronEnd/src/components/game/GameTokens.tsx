@@ -3,18 +3,13 @@ import { type GameState, type Piece, type Player } from '../../types/game';
 import styles from './GameTokens.module.css';
 
 interface BoardDimensions {
-  containerWidth: number;
-  containerHeight: number;
   imageWidth: number;
   imageHeight: number;
   imageX: number;
   imageY: number;
 }
 
-const GameTokens: React.FC<{ 
-  gameState: GameState;
-  boardDimensions: BoardDimensions;
-}> = ({ gameState, boardDimensions }) => {
+const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensions }> = ({ gameState, boardDimensions }) => {
   const BOARD_SIZE = 68;
   const GOAL_POSITIONS = 8;
 
@@ -158,12 +153,10 @@ const GameTokens: React.FC<{
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
     const pieceNumber = piece.id.split('-').pop()?.slice(-1) || '?';
 
-    // Si no tenemos dimensiones de la imagen, no renderizar
-    if (boardDimensions.imageWidth === 0 || boardDimensions.imageHeight === 0) {
-      return null;
-    }
+    // Si no hay dimensiones calculadas aún, no renderizar
+    if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
 
-    // Convertir coordenadas porcentuales a posición absoluta sobre la imagen
+    // Convertir coords porcentuales (0-100) a píxeles sobre el área de imagen ('contain')
     const absoluteX = boardDimensions.imageX + (x / 100) * boardDimensions.imageWidth;
     const absoluteY = boardDimensions.imageY + (y / 100) * boardDimensions.imageHeight;
 
@@ -171,19 +164,12 @@ const GameTokens: React.FC<{
       <div
         key={piece.id}
         className={styles.token}
-        style={{
-          left: `${absoluteX}px`,
-          top: `${absoluteY}px`,
-        }}
-        title={`${player.name} - Ficha ${pieceNumber} - Pos: ${piece.position} - Coords: (${Math.round(absoluteX)}, ${Math.round(absoluteY)})`}
+        style={{ left: `${absoluteX}px`, top: `${absoluteY}px` }}
+        title={`${player.name} - Ficha ${pieceNumber} - Pos: ${piece.position}`}
       >
         <div
           className={styles['token-inner']}
-          style={{
-            backgroundColor: color.bg,
-            borderColor: color.border,
-            color: color.text,
-          }}
+          style={{ backgroundColor: color.bg, borderColor: color.border, color: color.text }}
         >
           {pieceNumber}
         </div>
