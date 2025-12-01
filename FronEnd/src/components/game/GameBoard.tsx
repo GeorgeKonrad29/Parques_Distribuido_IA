@@ -215,9 +215,8 @@ export default GameBoard;
 // Componente del tablero visual de Parqués
 const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
   const boardRef = React.useRef<HTMLDivElement>(null);
-  const dragRef = React.useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
+  const [diceValues, setDiceValues] = useState<number[]>([]);
   const [boardDimensions, setBoardDimensions] = useState({
     containerWidth: 0,
     containerHeight: 0,
@@ -231,60 +230,7 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
     imageScreenY: 0,
   });
 
-  // Handlers de arrastre (drag-to-pan)
-  useEffect(() => {
-    const onPointerMove = (e: PointerEvent) => {
-      if (!dragRef.current.dragging) return;
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
-      setPan({ x: dragRef.current.originX + dx, y: dragRef.current.originY + dy });
-    };
-
-    const onPointerUp = () => {
-      if (!dragRef.current.dragging) return;
-      dragRef.current.dragging = false;
-      setIsDragging(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-    };
-
-    // Cleanup defensivo si el componente se desmonta durante el drag
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-    };
-  }, []);
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // Ignorar clicks con botones distintos al primario
-    if (e.button !== 0) return;
-    e.preventDefault();
-    dragRef.current.dragging = true;
-    dragRef.current.startX = e.clientX;
-    dragRef.current.startY = e.clientY;
-    dragRef.current.originX = pan.x;
-    dragRef.current.originY = pan.y;
-    setIsDragging(true);
-    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-    const onPointerMove = (evt: PointerEvent) => {
-      if (!dragRef.current.dragging) return;
-      const dx = evt.clientX - dragRef.current.startX;
-      const dy = evt.clientY - dragRef.current.startY;
-      setPan({ x: dragRef.current.originX + dx, y: dragRef.current.originY + dy });
-    };
-    const onPointerUp = () => {
-      dragRef.current.dragging = false;
-      setIsDragging(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-    };
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-  };
+  // Drag-to-pan eliminado
 
   useEffect(() => {
     let ro: ResizeObserver | null = null;
@@ -363,17 +309,54 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
     };
   }, []);
 
+  const handlePieceClick = (pieceId: string) => {
+    setSelectedPieceId(pieceId === selectedPieceId ? null : pieceId);
+  };
+
+  const handlePositionClick = (position: number) => {
+    if (!selectedPieceId) return;
+
+    // Crear una copia profunda del estado para forzar re-render
+    const updatedPlayers = gameState.players.map(player => ({
+      ...player,
+      pieces: player.pieces.map(piece => {
+        if (piece.id === selectedPieceId) {
+          return {
+            ...piece,
+            position: position,
+            status: 'board' as const
+          };
+        }
+        return piece;
+      })
+    }));
+
+    // Actualizar el estado del juego
+    gameState.players = updatedPlayers;
+    
+    // Limpiar selección
+    setSelectedPieceId(null);
+
+    console.log(`Ficha ${selectedPieceId} movida a posición ${position}`);
+  };
+
+  // Placeholder: lanzamiento de dados (genera dos números aleatorios 1-6)
+  const rollDice = () => {
+    // TODO: Reemplazar por lógica real de backend/turnos
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    setDiceValues([d1, d2]);
+  };
+
   return (
     <div className={styles.boardWrapper}>
       {/* Tablero con overlay visual */}
       <div
         ref={boardRef}
-        className={`${styles.boardContainer} ${isDragging ? styles.grabbing : styles.grab}`}
+        className={styles.boardContainer}
         style={{
           backgroundImage: `url(${tableroImage})`,
-          transform: `translate3d(${pan.x}px, ${pan.y}px, 0)`,
         }}
-        onPointerDown={onPointerDown}
       >
         {/* Visualización del área de la imagen */}
         {boardDimensions.imageWidth > 0 && (
@@ -389,8 +372,21 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
           </div>
         )}
 
+        {/* Controles de dados */}
+        <div className="dice-controls" style={{ position: 'absolute', left: 12, top: 12, zIndex: 5 }}>
+          <button className="btn" onClick={rollDice}>Tirar dados</button>
+          <div style={{ marginTop: 8 }}>Dados: {diceValues.length ? `${diceValues[0]} y ${diceValues[1]}` : '—'}</div>
+        </div>
+
         {/* Capa para las fichas */}
-        <GameTokens gameState={gameState} boardDimensions={boardDimensions} />
+        <GameTokens 
+          gameState={gameState} 
+          boardDimensions={boardDimensions}
+          selectedPieceId={selectedPieceId}
+          onPieceClick={handlePieceClick}
+          onPositionClick={handlePositionClick}
+          diceValues={diceValues}
+        />
       </div>
     </div>
   );

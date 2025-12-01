@@ -9,9 +9,25 @@ interface BoardDimensions {
   imageY: number;
 }
 
-const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensions }> = ({ gameState, boardDimensions }) => {
-  const BOARD_SIZE = 68;
-  const GOAL_POSITIONS = 8;
+interface GameTokensProps {
+  gameState: GameState;
+  boardDimensions: BoardDimensions;
+  selectedPieceId: string | null;
+  onPieceClick: (pieceId: string) => void;
+  onPositionClick: (position: number) => void;
+  diceValues: number[];
+}
+
+const GameTokens: React.FC<GameTokensProps> = ({ 
+  gameState, 
+  boardDimensions, 
+  selectedPieceId,
+  onPieceClick,
+  onPositionClick,
+  diceValues,
+}) => {
+  const BOARD_SIZE = 72;
+  // Meta simplificada: no se usa conteo; la meta es la posición 71 del tablero
 
   const COLOR_THEME: Record<string, { bg: string; text: string; border: string }> = {
     RED: { bg: '#ef4444', text: '#ffffff', border: '#dc2626' },
@@ -21,10 +37,10 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
   };
 
   const GOAL_ENTRY_POSITIONS: Record<string, number> = {
-    RED: 0,
-    BLUE: 17,
-    YELLOW: 34,
-    GREEN: 51,
+    YELLOW: 0,   // Casa base amarilla (posiciones 63-67, 0-11)
+    BLUE: 17,    // Rotación 90° CCW
+    RED: 34,     // Rotación 180°
+    GREEN: 51,   // Rotación 270° CCW
   };
 
   // Calcular coordenadas para posiciones del tablero principal (0-67)
@@ -32,26 +48,90 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
   const getBoardPositionCoords = (position: number): { x: number; y: number } => {
     // Normalizar posición (0-67)
     const normalizedPos = position % BOARD_SIZE;
+    // Coordenadas base (CASA AMARILLA): 63-67 y 0-11 manuales
+    const baseMap: Record<number, { x: number; y: number }> = {
+      63: { x: 3, y: 53 },
+      64: { x: 7, y: 50 },
+      65: { x: 11, y: 50 },
+      66: { x: 15.2, y: 50 },
+      67: { x: 19.3, y: 50 },
+      68: { x: 23.2, y: 50 },
+      69: { x: 27.5, y: 50 },
+      70: { x: 31.5, y: 50 },
+      71: { x: 40, y: 50 },
+      0: { x: 19, y: 60 },
+      1: { x: 23, y: 60 },
+      2: { x: 28, y: 61 },
+      3: { x: 33, y: 63 },
+      4: { x: 36.5, y: 66 },
+      5: { x: 38.5, y: 70.5 },
+      6: { x: 40, y: 75.3 },
+      7: { x: 40, y: 79.5 },
+      8: { x: 40, y: 83.5 },
+      9: { x: 40, y: 87.5 },
+      10: { x: 40, y: 92 },
+      11: { x: 40, y: 96 },
+    };
 
-    // Dividir el tablero en 4 cuadrantes (cada uno con ~17 posiciones)
-    // Top: 0-16, Right: 17-33, Bottom: 34-50, Left: 51-67
-    if (normalizedPos >= 0 && normalizedPos <= 16) {
-      // Top horizontal (de izquierda a derecha)
-      const progress = normalizedPos / 16;
-      return { x: 15 + progress * 70, y: 12 };
-    } else if (normalizedPos >= 17 && normalizedPos <= 33) {
-      // Right vertical (de arriba a abajo)
-      const progress = (normalizedPos - 17) / 16;
-      return { x: 88, y: 15 + progress * 70 };
-    } else if (normalizedPos >= 34 && normalizedPos <= 50) {
-      // Bottom horizontal (de derecha a izquierda)
-      const progress = (normalizedPos - 34) / 16;
-      return { x: 85 - progress * 70, y: 88 };
-    } else {
-      // Left vertical (de abajo a arriba)
-      const progress = (normalizedPos - 51) / 16;
-      return { x: 12, y: 85 - progress * 70 };
-    }
+    // Si la posición está en el mapa base, devolver directamente
+    if (normalizedPos in baseMap) return baseMap[normalizedPos];
+    // Coordenadas derivadas por rotación manual (explícitas) para 12-62
+    // 12-28 (rotación 90° CCW de segmento base) CORREGIDO (casa base amarilla)
+    if (normalizedPos === 12) return { x: 53, y: 96 };
+    if (normalizedPos === 13) return { x: 60, y: 96 };
+    if (normalizedPos === 14) return { x: 60, y: 91.8 };
+    if (normalizedPos === 15) return { x: 60, y: 87.8 };
+    if (normalizedPos === 16) return { x: 60, y: 83.8 };
+    if (normalizedPos === 17) return { x: 60, y: 80 };
+    if (normalizedPos === 18) return { x: 60, y: 76 };
+    if (normalizedPos === 19) return { x: 61, y: 71 };
+    if (normalizedPos === 20) return { x: 63, y: 67 };
+    if (normalizedPos === 21) return { x: 66, y: 63.5 };
+    if (normalizedPos === 22) return { x: 70.5, y: 61.5 };
+    if (normalizedPos === 23) return { x: 75.3, y: 60 };
+    if (normalizedPos === 24) return { x: 79.5, y: 60 };
+    if (normalizedPos === 25) return { x: 84, y: 60 };
+    if (normalizedPos === 26) return { x: 88, y: 60 };
+    if (normalizedPos === 27) return { x: 92, y: 60 };
+    if (normalizedPos === 28) return { x: 96, y: 60 };
+    // 29-45 (rotación 180°)
+    if (normalizedPos === 29) return { x: 96, y: 47 };
+    if (normalizedPos === 30) return { x: 96, y: 40 };
+    if (normalizedPos === 31) return { x: 91.8, y: 40 };
+    if (normalizedPos === 32) return { x: 87.8, y: 40 };
+    if (normalizedPos === 33) return { x: 83.8, y: 40 };
+    if (normalizedPos === 34) return { x: 79.6, y: 40 };
+    if (normalizedPos === 35) return { x: 75.5, y: 40 };
+    if (normalizedPos === 36) return { x: 70.5, y: 39 };
+    if (normalizedPos === 37) return { x: 65.5, y: 37 };
+    if (normalizedPos === 38) return { x: 62, y: 33.5 };
+    if (normalizedPos === 39) return { x: 60, y: 29 };
+    if (normalizedPos === 40) return { x: 59, y: 23.7 };
+    if (normalizedPos === 41) return { x: 59, y: 19.5 };
+    if (normalizedPos === 42) return { x: 59, y: 15.5 };
+    if (normalizedPos === 43) return { x: 59, y: 11.5 };
+    if (normalizedPos === 44) return { x: 59, y: 7 };
+    if (normalizedPos === 45) return { x: 59, y: 3 };
+    // 46-62 (rotación 270° CCW = 90° CW del segmento base anterior)
+    if (normalizedPos === 46) return { x: 47, y: 3 };
+    if (normalizedPos === 47) return { x: 40, y: 3 };
+    if (normalizedPos === 48) return { x: 40, y: 7.2 };
+    if (normalizedPos === 49) return { x: 40, y: 11.2 };
+    if (normalizedPos === 50) return { x: 40, y: 15.2 };
+    if (normalizedPos === 51) return { x: 40, y: 19 };
+    if (normalizedPos === 52) return { x: 40, y: 23.8 };
+    if (normalizedPos === 53) return { x: 39, y: 29 };
+    if (normalizedPos === 54) return { x: 37, y: 33 };
+    if (normalizedPos === 55) return { x: 33.8, y: 36.8 };
+    if (normalizedPos === 56) return { x: 29, y: 39 };
+    if (normalizedPos === 57) return { x: 23.7, y: 40 };
+    if (normalizedPos === 58) return { x: 19.3, y: 40 };
+    if (normalizedPos === 59) return { x: 15, y: 40 };
+    if (normalizedPos === 60) return { x: 11, y: 40 };
+    if (normalizedPos === 61) return { x: 7, y: 40 };
+    if (normalizedPos === 62) return { x: 3, y: 40 };
+    // Fallback
+    return { x: 50, y: 50 };
   };
 
   // Calcular coordenadas para fichas en casa (4 posiciones por jugador)
@@ -89,71 +169,42 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
     return positions[pieceIndex % 4];
   };
 
-  // Calcular coordenadas para fichas en meta (8 posiciones por jugador)
-  const getGoalPositionCoords = (color: string, goalIndex: number): { x: number; y: number } => {
-    // goalIndex: 0-7 (8 posiciones de meta)
-    const progress = (goalIndex + 1) / (GOAL_POSITIONS + 1);
+  // Meta simplificada: usar posición 71 en tablero (no se calcula camino de meta)
 
-    const goalPaths: Record<string, { start: { x: number; y: number }; end: { x: number; y: number } }> = {
-      RED: {
-        start: { x: 50, y: 12 },
-        end: { x: 50, y: 35 },
-      },
-      GREEN: {
-        start: { x: 88, y: 50 },
-        end: { x: 65, y: 50 },
-      },
-      YELLOW: {
-        start: { x: 50, y: 88 },
-        end: { x: 50, y: 65 },
-      },
-      BLUE: {
-        start: { x: 12, y: 50 },
-        end: { x: 35, y: 50 },
-      },
-    };
-
-    const path = goalPaths[color.toUpperCase()] || goalPaths.RED;
-    return {
-      x: path.start.x + (path.end.x - path.start.x) * progress,
-      y: path.start.y + (path.end.y - path.start.y) * progress,
-    };
-  };
-
-  // Obtener todas las fichas con sus coordenadas
+  // Obtener todas las fichas con sus coordenadas y contar fichas por posición
   const getAllPiecesWithCoords = () => {
-    const pieces: Array<{ piece: Piece; player: Player; x: number; y: number }> = [];
+    const pieces: Array<{ piece: Piece; player: Player; x: number; y: number; positionKey: string }> = [];
+    const positionCounts: Record<string, number> = {};
 
     gameState.players.forEach((player) => {
       player.pieces.forEach((piece, index) => {
         let coords: { x: number; y: number };
+        let positionKey = '';
 
+        // Solo dos estados: home o board. La meta es posición 71 en el tablero.
         if (piece.status === 'home') {
           coords = getHomePositionCoords(player.color, index);
-        } else if (piece.status === 'goal') {
-          // Para fichas en meta, la posición relativa a la entrada de meta
-          const entryPos = GOAL_ENTRY_POSITIONS[player.color.toUpperCase()] || 0;
-          const goalIndex = piece.position - entryPos - 1;
-          coords = getGoalPositionCoords(player.color, Math.max(0, Math.min(goalIndex, GOAL_POSITIONS - 1)));
-        } else if (piece.status === 'board' || piece.status === 'safe_zone') {
-          // Fichas en el tablero (board o safe_zone)
-          coords = getBoardPositionCoords(piece.position);
+          positionKey = `home-${player.color}-${index}`;
         } else {
-          // Estado desconocido, usar posición del tablero por defecto
-          coords = getBoardPositionCoords(piece.position);
+          // Cualquier otro estado se considera tablero; meta es la 71
+          const pos = piece.position === 71 ? 71 : piece.position;
+          coords = getBoardPositionCoords(pos);
+          positionKey = `board-${pos}`;
         }
 
-        pieces.push({ piece, player, ...coords });
+        positionCounts[positionKey] = (positionCounts[positionKey] || 0) + 1;
+        pieces.push({ piece, player, ...coords, positionKey });
       });
     });
 
-    return pieces;
+    return { pieces, positionCounts };
   };
 
   // Renderizar una ficha
-  const renderPiece = (piece: Piece, player: Player, x: number, y: number) => {
+  const renderPiece = (piece: Piece, player: Player, x: number, y: number, count: number) => {
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
-    const pieceNumber = piece.id.split('-').pop()?.slice(-1) || '?';
+    const isSelected = selectedPieceId === piece.id;
+    const isDisabled = selectedPieceId !== null && selectedPieceId !== piece.id;
 
     // Si no hay dimensiones calculadas aún, no renderizar
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
@@ -169,12 +220,19 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
     const borderPx = Math.max(1, Math.round(tokenSize * 0.12));
     const fontPx = Math.max(8, Math.round(tokenSize * 0.42));
 
+    const handleClick = (e: React.MouseEvent) => {
+      if (isDisabled) return; // Ignorar clicks cuando otra ficha está seleccionada
+      e.stopPropagation();
+      onPieceClick(piece.id);
+    };
+
     return (
       <div
         key={piece.id}
-        className={styles.token}
+        className={`${styles.token} ${isSelected ? styles.selected : ''}`}
         style={{ left: `${absoluteX}px`, top: `${absoluteY}px` }}
-        title={`${player.name} - Ficha ${pieceNumber} - Pos: ${piece.position}`}
+        title={`${player.name} - Pos: ${piece.position}`}
+        onClick={handleClick}
       >
         <div
           className={styles['token-inner']}
@@ -186,23 +244,90 @@ const GameTokens: React.FC<{ gameState: GameState; boardDimensions: BoardDimensi
             height: `${tokenSize}px`,
             borderWidth: `${borderPx}px`,
             fontSize: `${fontPx}px`,
+            opacity: isDisabled ? 0.5 : 1,
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
           }}
         >
-          {pieceNumber}
+          {count > 1 ? count : ''}
         </div>
       </div>
     );
   };
 
-  const piecesWithCoords = getAllPiecesWithCoords();
+  const { pieces: piecesWithCoords, positionCounts } = getAllPiecesWithCoords();
+
+  // Renderizar posiciones del tablero (0-67)
+  const renderBoardPositions = () => {
+    if (!selectedPieceId) return null;
+    if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
+
+    const positions = [];
+    const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);
+    const positionSize = Math.max(16, Math.round((baseSide * 4) / 100));
+
+    // Determinar el color del jugador de la ficha seleccionada para rotar numeración
+    let selectedColorEntry = 0;
+    const selectedOwner = gameState.players.find(p => p.pieces.some(pc => pc.id === selectedPieceId));
+    if (selectedOwner) {
+      const colorKey = selectedOwner.color.toUpperCase();
+      selectedColorEntry = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
+    }
+
+    // Solo mostrar posiciones alcanzables con los dados desde la posición actual de la ficha seleccionada
+    const ownerForMoves = gameState.players.find(p => p.pieces.some(pc => pc.id === selectedPieceId));
+    const selectedPiece = ownerForMoves?.pieces.find(pc => pc.id === selectedPieceId);
+    const currentPos = selectedPiece ? selectedPiece.position : 0;
+    const candidates = new Set<number>();
+    diceValues.forEach(d => {
+      if (d >= 1 && d <= 6) {
+        candidates.add((currentPos + d) % BOARD_SIZE);
+      }
+    });
+
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      if (!candidates.has(i)) continue;
+      const coords = getBoardPositionCoords(i);
+      const absoluteX = boardDimensions.imageX + (coords.x / 100) * boardDimensions.imageWidth;
+      const absoluteY = boardDimensions.imageY + (coords.y / 100) * boardDimensions.imageHeight;
+
+      const displayNumber = (i - selectedColorEntry + BOARD_SIZE) % BOARD_SIZE;
+      positions.push(
+        <div
+          key={`pos-${i}`}
+          className={styles['board-position']}
+          style={{
+            left: `${absoluteX}px`,
+            top: `${absoluteY}px`,
+            width: `${positionSize}px`,
+            height: `${positionSize}px`,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPositionClick(i);
+          }}
+          title={`Posición ${displayNumber}`}
+        >
+          <span className={styles['position-number']}>{displayNumber}</span>
+        </div>
+      );
+    }
+
+    return positions;
+  };
 
   return (
     <div className={styles['tokens-overlay']}>
-      {piecesWithCoords.map(({ piece, player, x, y }) =>
-        renderPiece(piece, player, x, y)
+      {renderBoardPositions()}
+      {piecesWithCoords.map(({ piece, player, x, y, positionKey }) =>
+        renderPiece(piece, player, x, y, positionCounts[positionKey] || 1)
       )}
     </div>
   );
 };
 
 export default GameTokens;
+
+
+
+
+
