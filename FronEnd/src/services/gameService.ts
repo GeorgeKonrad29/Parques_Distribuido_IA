@@ -204,6 +204,34 @@ class GameService {
       throw new Error('Error desconocido al lanzar dado');
     }
   }
+
+  async getValidMoves(gameId: string, diceValue: number): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${gameId}/valid-moves/${diceValue}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error al obtener movimientos válidos';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch {
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching valid moves:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error desconocido al obtener movimientos válidos');
+    }
+  }
 }
 
 export const gameService = new GameService();

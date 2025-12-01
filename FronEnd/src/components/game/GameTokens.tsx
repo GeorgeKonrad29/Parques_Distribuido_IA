@@ -16,6 +16,8 @@ interface GameTokensProps {
   onPieceClick: (pieceId: string) => void;
   onPositionClick: (position: number) => void;
   diceValues: number[];
+  activePlayerId: string | null;
+  myPlayerId: string | null;
 }
 
 const GameTokens: React.FC<GameTokensProps> = ({ 
@@ -25,6 +27,8 @@ const GameTokens: React.FC<GameTokensProps> = ({
   onPieceClick,
   onPositionClick,
   diceValues,
+  activePlayerId,
+  myPlayerId,
 }) => {
   const BOARD_SIZE = 72;
   // Meta simplificada: no se usa conteo; la meta es la posición 71 del tablero
@@ -204,7 +208,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
   const renderPiece = (piece: Piece, player: Player, x: number, y: number, count: number) => {
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
     const isSelected = selectedPieceId === piece.id;
-    const isDisabled = selectedPieceId !== null && selectedPieceId !== piece.id;
+    const anotherSelected = selectedPieceId !== null && selectedPieceId !== piece.id;
+    const myTurnAndOwner = myPlayerId !== null && activePlayerId === myPlayerId && player.id === myPlayerId;
+    const isDisabled = anotherSelected || !myTurnAndOwner;
 
     // Si no hay dimensiones calculadas aún, no renderizar
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
@@ -260,6 +266,8 @@ const GameTokens: React.FC<GameTokensProps> = ({
   const renderBoardPositions = () => {
     if (!selectedPieceId) return null;
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
+    // Solo mostrar si es mi turno
+    if (!(myPlayerId !== null && activePlayerId === myPlayerId)) return null;
 
     const positions = [];
     const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);
@@ -268,6 +276,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     // Determinar el color del jugador de la ficha seleccionada para rotar numeración
     let selectedColorEntry = 0;
     const selectedOwner = gameState.players.find(p => p.pieces.some(pc => pc.id === selectedPieceId));
+    if (!selectedOwner || selectedOwner.id !== myPlayerId) return null;
     if (selectedOwner) {
       const colorKey = selectedOwner.color.toUpperCase();
       selectedColorEntry = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;

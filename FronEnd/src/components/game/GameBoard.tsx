@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Users, Dice5, Crown } from 'lucide-react';
 import { gameService} from '../../services/gameService';
+import { authService } from '../../services/authService';
+import type { Game } from '../../types/game';
 import { type GameState, type Player } from '../../types/game';
 import { Loading } from '../common/Loading';
 import GameTokens from './GameTokens';
@@ -14,6 +16,9 @@ export const GameBoard: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gameMeta, setGameMeta] = useState<Game | null>(null);
+  const [startingGame, setStartingGame] = useState(false);
+  const currentUserId = authService.getUser() ? String(authService.getUser()!.id) : null;
 
   const fetchGameState = async () => {
     if (!gameId) {
@@ -27,6 +32,18 @@ export const GameBoard: React.FC = () => {
       setError(null);
       const state = await gameService.getGameState(gameId);
       setGameState(state);
+      // Si el juego está esperando, obtener metadata para saber el creador
+      if (state.status === 'waiting') {
+        try {
+          const available = await gameService.getAvailableGames();
+          const meta = available.find(g => g.id === state.id) || null;
+          setGameMeta(meta);
+        } catch (e) {
+          // Silenciar error de metadata
+        }
+      } else {
+        setGameMeta(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el juego');
       console.error('Error fetching game state:', err);
@@ -88,11 +105,49 @@ export const GameBoard: React.FC = () => {
                 )}
               </div>
             </div>
-
-            <button onClick={fetchGameState} className={styles.refreshButton}>
-              <RefreshCw className="w-4 h-4" />
-              <span>Actualizar</span>
-            </button>
+            <div className={styles.headerActions}>
+              <button onClick={fetchGameState} className={styles.refreshButton}>
+                <RefreshCw className="w-4 h-4" />
+                <span>Actualizar</span>
+              </button>
+              {gameState && gameState.status === 'waiting' && (
+                <button
+                  onClick={async () => {
+                    if (!gameState) return;
+                    setStartingGame(true);
+                    try {
+                      await gameService.startGame(String(gameState.id));
+                      await fetchGameState();
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Error al iniciar el juego');
+                    } finally {
+                      setStartingGame(false);
+                    }
+                  }}
+                  className={`btn-success ${styles.refreshButton}`}
+                  style={{ marginLeft: 8 }}
+                  disabled={startingGame}
+                >
+                  {startingGame ? 'Iniciando...' : 'Iniciar juego'}
+                </button>
+              )}
+              {gameState && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await gameService.leaveGame(String(gameState.id));
+                      navigate('/games');
+                    } catch (err) {
+                      console.error('Error al abandonar el juego:', err);
+                    }
+                  }}
+                  className={`btn-danger ${styles.refreshButton}`}
+                  style={{ marginLeft: 8 }}
+                >
+                  Abandonar juego
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -133,7 +188,7 @@ export const GameBoard: React.FC = () => {
                   </div>
                 </div>
 
-                <ParquesBoard gameState={gameState} />
+                <ParquesBoard gameState={gameState} onRefresh={fetchGameState} />
               </div>
 
               <div className={styles.sidebar}>
@@ -190,6 +245,14 @@ export const GameBoard: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Estado (JSON) para depuración */}
+                <div className={`card ${styles.detailsCard}`}>
+                  <h2 className={styles.detailsTitle}>Estado (JSON)</h2>
+                  <pre className={styles.jsonBlock}>
+                    {JSON.stringify(gameState, null, 2)}
+                  </pre>
+                </div>
               </div>
             </section>
 
@@ -213,10 +276,18 @@ export const GameBoard: React.FC = () => {
 export default GameBoard;
 
 // Componente del tablero visual de Parqués
-const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
+const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<void> }> = ({ gameState, onRefresh }) => {
   const boardRef = React.useRef<HTMLDivElement>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [diceValues, setDiceValues] = useState<number[]>([]);
+  const [validMoves, setValidMoves] = useState<any>(null);
+  const [rollingDice, setRollingDice] = useState(false);
+  
+  // IDs para comparación de turnos
+  const myPlayerId = authService.getUser() ? String(authService.getUser()!.id) : null;
+  const activePlayerId = gameState.current_player_id; // Ya viene como string del backend
+  const isMyTurn = myPlayerId !== null && activePlayerId !== null && activePlayerId === myPlayerId;
+  
   const [boardDimensions, setBoardDimensions] = useState({
     containerWidth: 0,
     containerHeight: 0,
@@ -340,12 +411,30 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
     console.log(`Ficha ${selectedPieceId} movida a posición ${position}`);
   };
 
-  // Placeholder: lanzamiento de dados (genera dos números aleatorios 1-6)
-  const rollDice = () => {
-    // TODO: Reemplazar por lógica real de backend/turnos
-    const d1 = Math.floor(Math.random() * 6) + 1;
-    const d2 = Math.floor(Math.random() * 6) + 1;
-    setDiceValues([d1, d2]);
+  // Lanzar dados llamando al backend
+  const rollDice = async () => {
+    if (!gameState?.id || !isMyTurn) return;
+    
+    setRollingDice(true);
+    try {
+      const diceValue = await gameService.rollDice(String(gameState.id));
+      setDiceValues([diceValue]);
+      
+      // Refrescar estado del juego para obtener last_dice_value actualizado
+      await onRefresh();
+      
+      // Obtener movimientos válidos para este valor de dado
+      const moves = await gameService.getValidMoves(String(gameState.id), diceValue);
+      setValidMoves(moves);
+      
+      console.log('Dado lanzado:', diceValue);
+      console.log('Movimientos válidos:', moves);
+    } catch (err) {
+      console.error('Error al lanzar dado:', err);
+      setValidMoves({ error: err instanceof Error ? err.message : 'Error desconocido' });
+    } finally {
+      setRollingDice(false);
+    }
   };
 
   return (
@@ -373,9 +462,24 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
         )}
 
         {/* Controles de dados */}
-        <div className="dice-controls" style={{ position: 'absolute', left: 12, top: 12, zIndex: 5 }}>
-          <button className="btn" onClick={rollDice}>Tirar dados</button>
-          <div style={{ marginTop: 8 }}>Dados: {diceValues.length ? `${diceValues[0]} y ${diceValues[1]}` : '—'}</div>
+        <div className="dice-controls" style={{ position: 'absolute', left: 12, top: 12, zIndex: 5, background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+          <button className="btn" onClick={rollDice} disabled={!isMyTurn || rollingDice} title={isMyTurn ? 'Tu turno' : 'No es tu turno'}>
+            {rollingDice ? 'Tirando...' : 'Tirar dados'}
+          </button>
+          <div style={{ marginTop: 8, fontWeight: 600 }}>
+            Dado: {gameState.last_dice_value ?? '—'}
+          </div>
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
+            {isMyTurn ? '✓ Tu turno' : `Turno: ${gameState.players.find(p => p.id === activePlayerId)?.name ?? '—'}`}
+          </div>
+          {validMoves && (
+            <div style={{ marginTop: 8, maxHeight: 200, overflow: 'auto' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>Movimientos válidos:</div>
+              <pre style={{ fontSize: 10, background: 'var(--bg-primary)', padding: 6, borderRadius: 4, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {JSON.stringify(validMoves, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
 
         {/* Capa para las fichas */}
@@ -386,6 +490,8 @@ const ParquesBoard: React.FC<{ gameState: GameState }> = ({ gameState }) => {
           onPieceClick={handlePieceClick}
           onPositionClick={handlePositionClick}
           diceValues={diceValues}
+          activePlayerId={activePlayerId}
+          myPlayerId={myPlayerId}
         />
       </div>
     </div>
