@@ -27,7 +27,6 @@ const GameTokens: React.FC<GameTokensProps> = ({
   onPieceClick,
   onPositionClick,
   diceValues,
-  activePlayerId,
   myPlayerId,
 }) => {
   const BOARD_SIZE = 72;
@@ -209,8 +208,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
     const isSelected = selectedPieceId === piece.id;
     const anotherSelected = selectedPieceId !== null && selectedPieceId !== piece.id;
-    const myTurnAndOwner = myPlayerId !== null && activePlayerId === myPlayerId && player.id === myPlayerId;
-    const isDisabled = anotherSelected || !myTurnAndOwner;
+    const isDisabled = anotherSelected;
 
     // Si no hay dimensiones calculadas aún, no renderizar
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
@@ -267,7 +265,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     if (!selectedPieceId) return null;
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
     // Solo mostrar si es mi turno
-    if (!(myPlayerId !== null && activePlayerId === myPlayerId)) return null;
+    if (!(myPlayerId !== null)) return null;
 
     const positions = [];
     const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);

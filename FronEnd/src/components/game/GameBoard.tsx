@@ -32,6 +32,7 @@ export const GameBoard: React.FC = () => {
       setError(null);
       const state = await gameService.getGameState(gameId);
       setGameState(state);
+      console.log(gameState)
       // Si el juego está esperando, obtener metadata para saber el creador
       if (state.status === 'waiting') {
         try {
@@ -282,11 +283,9 @@ const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<vo
   const [diceValues, setDiceValues] = useState<number[]>([]);
   const [validMoves, setValidMoves] = useState<any>(null);
   const [rollingDice, setRollingDice] = useState(false);
-  
-  // IDs para comparación de turnos
+  const [rollCount, setRollCount] = useState(0);
   const myPlayerId = authService.getUser() ? String(authService.getUser()!.id) : null;
-  const activePlayerId = gameState.current_player_id; // Ya viene como string del backend
-  const isMyTurn = myPlayerId !== null && activePlayerId !== null && activePlayerId === myPlayerId;
+  const isMyTurn = gameState?.current_player_id === myPlayerId;
   
   const [boardDimensions, setBoardDimensions] = useState({
     containerWidth: 0,
@@ -411,10 +410,11 @@ const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<vo
     console.log(`Ficha ${selectedPieceId} movida a posición ${position}`);
   };
 
+
+
   // Lanzar dados llamando al backend
   const rollDice = async () => {
-    if (!gameState?.id || !isMyTurn) return;
-    
+    if (!gameState?.id || rollCount >= 2) return;
     setRollingDice(true);
     try {
       const diceValue = await gameService.rollDice(String(gameState.id));
@@ -427,13 +427,30 @@ const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<vo
       const moves = await gameService.getValidMoves(String(gameState.id), diceValue);
       setValidMoves(moves);
       
-      console.log('Dado lanzado:', diceValue);
-      console.log('Movimientos válidos:', moves);
+      // Incrementar contador de tiros y forzar pasar turno si llega a 2
+      const newCount = rollCount + 1;
+      setRollCount(newCount);
+      if (newCount >= 2 && isMyTurn) {
+        await handlePassTurn();
+      }
     } catch (err) {
       console.error('Error al lanzar dado:', err);
       setValidMoves({ error: err instanceof Error ? err.message : 'Error desconocido' });
     } finally {
       setRollingDice(false);
+    }
+  };
+
+  const handlePassTurn = async () => {
+    if (!gameState?.id) return;
+    try {
+      await gameService.passTurn(String(gameState.id));
+      setRollCount(0);
+      setDiceValues([]);
+      setValidMoves(null);
+      await onRefresh();
+    } catch (err) {
+      console.error('Error al pasar turno:', err);
     }
   };
 
@@ -463,14 +480,19 @@ const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<vo
 
         {/* Controles de dados */}
         <div className="dice-controls" style={{ position: 'absolute', left: 12, top: 12, zIndex: 5, background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-          <button className="btn" onClick={rollDice} disabled={!isMyTurn || rollingDice} title={isMyTurn ? 'Tu turno' : 'No es tu turno'}>
+          <button className="btn" onClick={rollDice} disabled={ rollingDice || rollCount >= 2} >
             {rollingDice ? 'Tirando...' : 'Tirar dados'}
           </button>
           <div style={{ marginTop: 8, fontWeight: 600 }}>
             Dado: {gameState.last_dice_value ?? '—'}
           </div>
           <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
-            {isMyTurn ? '✓ Tu turno' : `Turno: ${gameState.players.find(p => p.id === activePlayerId)?.name ?? '—'}`}
+            Tiros restantes: {Math.max(0, 2 - rollCount)}
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <button className="btn" onClick={handlePassTurn} disabled={!isMyTurn || rollingDice || rollCount < 2}>
+              Pasar turno
+            </button>
           </div>
           {validMoves && (
             <div style={{ marginTop: 8, maxHeight: 200, overflow: 'auto' }}>
@@ -490,7 +512,7 @@ const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<vo
           onPieceClick={handlePieceClick}
           onPositionClick={handlePositionClick}
           diceValues={diceValues}
-          activePlayerId={activePlayerId}
+          activePlayerId={gameState.current_player_id}
           myPlayerId={myPlayerId}
         />
       </div>

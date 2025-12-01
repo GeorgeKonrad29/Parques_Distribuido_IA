@@ -232,6 +232,32 @@ class GameService {
       throw new Error('Error desconocido al obtener movimientos válidos');
     }
   }
+
+  async passTurn(gameId: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${gameId}/pass-turn`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error al pasar turno';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch {
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error passing turn:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error desconocido al pasar turno');
+    }
+  }
 }
 
 export const gameService = new GameService();

@@ -144,7 +144,6 @@ export const GameList: React.FC = () => {
                       backgroundColor: style.bg,
                       borderColor: style.border,
                       color: style.text,
-                      boxShadowColor: isSelected ? style.border : undefined,
                     }}
                   >
                     <div className={styles.colorCircle}>
