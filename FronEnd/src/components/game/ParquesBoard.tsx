@@ -8,12 +8,9 @@ import styles from './GameBoard.module.css';
 export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Promise<void> }> = ({ gameState, onRefresh }) => {
   const boardRef = React.useRef<HTMLDivElement>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
-  const [diceValues, setDiceValues] = useState<number[]>([]);
-  const [validMoves, setValidMoves] = useState<any>(null);
-  const [rollingDice, setRollingDice] = useState(false);
-  const [rollCount, setRollCount] = useState(0);
+  // Dice state removed; handled in DicePanel
   const myPlayerId = authService.getUser() ? String(authService.getUser()!.id) : null;
-  const isMyTurn = gameState?.current_player_id === myPlayerId;
+  // Turn logic handled in DicePanel
 
   const [boardDimensions, setBoardDimensions] = useState({
     containerWidth: 0,
@@ -126,42 +123,7 @@ export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Pro
     setSelectedPieceId(null);
   };
 
-  const rollDice = async () => {
-    if (!gameState?.id || rollCount >= 2) return;
-    setRollingDice(true);
-    try {
-      const diceValue = await (await import('../../services/gameService')).gameService.rollDice(String(gameState.id));
-      setDiceValues([diceValue]);
-
-      await onRefresh();
-
-      const moves = await (await import('../../services/gameService')).gameService.getValidMoves(String(gameState.id), diceValue);
-      setValidMoves(moves);
-
-      const newCount = rollCount + 1;
-      setRollCount(newCount);
-      if (newCount >= 2 && isMyTurn) {
-        await handlePassTurn();
-      }
-    } catch (err) {
-      setValidMoves({ error: err instanceof Error ? err.message : 'Error desconocido' });
-    } finally {
-      setRollingDice(false);
-    }
-  };
-
-  const handlePassTurn = async () => {
-    if (!gameState?.id) return;
-    try {
-      await (await import('../../services/gameService')).gameService.passTurn(String(gameState.id));
-      setRollCount(0);
-      setDiceValues([]);
-      setValidMoves(null);
-      await onRefresh();
-    } catch (err) {
-      // noop
-    }
-  };
+  // Dice controls relocated to sidebar; keep tokens logic only
 
   return (
     <div className={styles.boardWrapper}>
@@ -184,30 +146,7 @@ export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Pro
           />
         )}
 
-        <div className="dice-controls" style={{ position: 'absolute', left: 12, top: 12, zIndex: 5, background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-          <button className="btn" onClick={rollDice} disabled={ rollingDice || rollCount >= 2} >
-            {rollingDice ? 'Tirando...' : 'Tirar dados'}
-          </button>
-          <div style={{ marginTop: 8, fontWeight: 600 }}>
-            Dado: {gameState.last_dice_value ?? '—'}
-          </div>
-          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
-            Tiros restantes: {Math.max(0, 2 - rollCount)}
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <button className="btn" onClick={handlePassTurn} disabled={!isMyTurn || rollingDice || rollCount < 2}>
-              Pasar turno
-            </button>
-          </div>
-          {validMoves && (
-            <div style={{ marginTop: 8, maxHeight: 200, overflow: 'auto' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>Movimientos válidos:</div>
-              <pre style={{ fontSize: 10, background: 'var(--bg-primary)', padding: 6, borderRadius: 4, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {JSON.stringify(validMoves, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
+        {/* Dados movidos al panel lateral (DicePanel) */}
 
         <GameTokens 
           gameState={gameState} 
@@ -215,7 +154,7 @@ export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Pro
           selectedPieceId={selectedPieceId}
           onPieceClick={handlePieceClick}
           onPositionClick={handlePositionClick}
-          diceValues={diceValues}
+          diceValues={gameState?.last_dice_value ? [gameState.last_dice_value] : []}
           activePlayerId={gameState.current_player_id}
           myPlayerId={myPlayerId}
         />

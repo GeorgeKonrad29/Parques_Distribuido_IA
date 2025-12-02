@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Users, Dice5, Crown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Users, Crown } from 'lucide-react';
 import { gameService} from '../../services/gameService';
-import { authService } from '../../services/authService';
-import type { Game } from '../../types/game';
+// removed unused imports
 import { type GameState, type Player } from '../../types/game';
+import { PlayersSidebar } from './PlayersSidebar';
+import { GameDetails } from './GameDetails';
+import { DicePanel } from './DicePanel';
 import { Loading } from '../common/Loading';
-import GameTokens from './GameTokens';
 import { ParquesBoard } from './ParquesBoard';
-import tableroImage from './tablero.jpeg';
 import styles from './GameBoard.module.css';
 
 export const GameBoard: React.FC = () => {
@@ -17,9 +17,7 @@ export const GameBoard: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [gameMeta, setGameMeta] = useState<Game | null>(null);
   const [startingGame, setStartingGame] = useState(false);
-  const currentUserId = authService.getUser() ? String(authService.getUser()!.id) : null;
 
   const fetchGameState = async () => {
     if (!gameId) {
@@ -34,18 +32,7 @@ export const GameBoard: React.FC = () => {
       const state = await gameService.getGameState(gameId);
       setGameState(state);
       console.log(gameState)
-      // Si el juego está esperando, obtener metadata para saber el creador
-      if (state.status === 'waiting') {
-        try {
-          const available = await gameService.getAvailableGames();
-          const meta = available.find(g => g.id === state.id) || null;
-          setGameMeta(meta);
-        } catch (e) {
-          // Silenciar error de metadata
-        }
-      } else {
-        setGameMeta(null);
-      }
+      // Metadata fetch removed; not used in UI
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el juego');
       console.error('Error fetching game state:', err);
@@ -126,8 +113,7 @@ export const GameBoard: React.FC = () => {
                       setStartingGame(false);
                     }
                   }}
-                  className={`btn-success ${styles.refreshButton}`}
-                  style={{ marginLeft: 8 }}
+                  className={styles.startButton}
                   disabled={startingGame}
                 >
                   {startingGame ? 'Iniciando...' : 'Iniciar juego'}
@@ -143,8 +129,7 @@ export const GameBoard: React.FC = () => {
                       console.error('Error al abandonar el juego:', err);
                     }
                   }}
-                  className={`btn-danger ${styles.refreshButton}`}
-                  style={{ marginLeft: 8 }}
+                  className={styles.leaveButton}
                 >
                   Abandonar juego
                 </button>
@@ -194,59 +179,9 @@ export const GameBoard: React.FC = () => {
               </div>
 
               <div className={styles.sidebar}>
-                <div className={`card ${styles.playersCard}`}>
-                  <h2 className={styles.playersTitle}>Jugadores</h2>
-                  <div className={styles.playersList}>
-                    {gameState.players.map((player) => (
-                      <div
-                        key={player.id}
-                        className={`${styles.playerItem} ${
-                          gameState.current_player_id === player.id ? styles.currentTurn : ''
-                        }`}
-                      >
-                        <div className={styles.playerHeader}>
-                          <div>
-                            <p className={styles.playerName}>{player.name}</p>
-                            <span className={styles.playerColor}>
-                              Color: {player.color}
-                            </span>
-                          </div>
-                          {gameState.current_player_id === player.id && (
-                            <span className={styles.turnBadge}>En turno</span>
-                          )}
-                        </div>
-                        <p className={styles.playerPieces}>
-                          Piezas activas: {player.pieces.filter((p) => p.status === 'board' || p.status === 'safe_zone').length}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`card ${styles.detailsCard}`}>
-                  <h2 className={styles.detailsTitle}>Detalles del Juego</h2>
-                  <div className={styles.detailsList}>
-                    <div className={styles.detailItem}>
-                      <span className={styles.detailLabel}>Estado:</span>
-                      <span className={styles.detailValue}>{gameState.status.replace('_', ' ')}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                      <span className={styles.detailLabel}>Último turno:</span>
-                      <span>
-                        {gameState.current_player_id
-                          ? gameState.players.find((p) => p.id === gameState.current_player_id)?.name
-                          : 'Sin turno activo'}
-                      </span>
-                    </div>
-                    <div className={styles.detailItem}>
-                      <span className={styles.detailLabel}>Último dado lanzado:</span>
-                      <div className={styles.diceValue}>
-                        <Dice5 className="w-4 h-4 text-text-secondary" />
-                        <span>{gameState.last_dice_value ?? '—'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <PlayersSidebar gameState={gameState} />
+                <GameDetails gameState={gameState} />
+                <DicePanel gameState={gameState} onRefresh={fetchGameState} />
 
                 {/* Estado (JSON) para depuración */}
                 <div className={`card ${styles.detailsCard}`}>

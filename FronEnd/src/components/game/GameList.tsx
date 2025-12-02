@@ -80,29 +80,19 @@ export const GameList: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      {/* Header */}
-      <header className="bg-bg-secondary border-b border-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="p-2 hover:bg-bg-primary rounded-lg transition"
-              >
-                <ArrowLeft className="w-5 h-5 text-text-primary" />
-              </button>
-              <h1 className="text-xl font-bold text-text-primary">Juegos Disponibles</h1>
-            </div>
-
-            <button
-              onClick={handleCreateGame}
-              className="btn-success flex items-center space-x-2 px-4 py-2"
-            >
-              <Play className="w-4 h-4" />
-              <span>Crear Juego</span>
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={styles.headerLeft}>
+            <button onClick={() => navigate('/dashboard')} className={styles.backButton}>
+              <ArrowLeft className={styles.backIcon} />
             </button>
+            <h1 className={styles.headerTitle}>Juegos Disponibles</h1>
           </div>
+          <button onClick={handleCreateGame} className={styles.createButton}>
+            <Play className={styles.createIcon} />
+            <span>Crear Juego</span>
+          </button>
         </div>
       </header>
 
@@ -171,128 +161,72 @@ export const GameList: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={styles.main}>
         {error && (
-          <div className="mb-6 p-4 bg-error/10 border border-error rounded-lg">
-            <p className="text-error text-sm">{error}</p>
+          <div className={styles.errorBox}>
+            <p className={styles.errorText}>{error}</p>
           </div>
         )}
 
         {games.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎮</div>
-            <h2 className="text-2xl font-bold text-text-primary mb-2">
-              No hay juegos disponibles
-            </h2>
-            <p className="text-text-secondary mb-6">
-              Sé el primero en crear una partida y espera a otros jugadores
-            </p>
-            <button
-              onClick={handleCreateGame}
-              className="btn-success px-6 py-3"
-            >
-              Crear Primer Juego
-            </button>
+          <div className={styles.emptyState}>
+            <div className={styles.emptyEmoji}>🎮</div>
+            <h2 className={styles.emptyTitle}>No hay juegos disponibles</h2>
+            <p className={styles.emptySubtitle}>Sé el primero en crear una partida y espera a otros jugadores</p>
+            <button onClick={handleCreateGame} className={styles.primaryButtonLg}>Crear Primer Juego</button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={styles.cardGrid}>
             {games.map((game) => (
-              <div
-                key={game.id}
-                className="card hover:shadow-lg transition-shadow overflow-hidden"
-              >
-                {/* Header de la Card */}
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary mb-1">
-                    {game.name}
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      game.status === 'waiting'
-                        ? 'bg-warning/10 text-warning'
-                        : game.status === 'in_progress'
-                        ? 'bg-info/10 text-info'
-                        : 'bg-success/10 text-success'
-                    }`}>
+              <div key={game.id} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>{game.name}</h3>
+                  <div className={styles.badgeRow}>
+                    <span className={`${styles.badge} ${game.status === 'waiting' ? styles.badgeWaiting : game.status === 'in_progress' ? styles.badgeProgress : styles.badgeSuccess}`}>
                       {game.status === 'waiting' ? 'Esperando...' : game.status === 'in_progress' ? 'En Juego' : 'Finalizado'}
                     </span>
                   </div>
                 </div>
 
-                {/* Información del Juego */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center space-x-3">
-                    <Users className="w-4 h-4 text-text-secondary" />
-                    <span className="text-sm text-text-secondary">
-                      {game.current_players}/{game.max_players} Jugadores
+                <div className={styles.infoList}>
+                  <div className={styles.infoItem}>
+                    <Users className={styles.infoIcon} />
+                    <span className={styles.infoText}>{game.current_players}/{game.max_players} Jugadores</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <Calendar className={styles.infoIcon} />
+                    <span className={styles.infoText}>
+                      {new Date(game.created_at).toLocaleDateString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="w-4 h-4 text-text-secondary" />
-                    <span className="text-sm text-text-secondary">
-                      {new Date(game.created_at).toLocaleDateString('es-ES', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
+                  <div className={styles.infoItem}>
                     {game.is_private ? (
-                      <Lock className="w-4 h-4 text-warning" />
+                      <Lock className={styles.lockIcon} />
                     ) : (
-                      <Globe className="w-4 h-4 text-success" />
+                      <Globe className={styles.globeIcon} />
                     )}
-                    <span className="text-sm text-text-secondary">
-                      {game.is_private ? 'Privado' : 'Público'}
-                    </span>
+                    <span className={styles.infoText}>{game.is_private ? 'Privado' : 'Público'}</span>
                   </div>
                 </div>
 
-                {/* Progreso de Jugadores */}
-                <div className="mb-4">
-                  <div className="w-full bg-bg-primary rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-parques-blue to-info h-2 rounded-full transition-all"
-                      style={{
-                        width: `${(game.current_players / game.max_players) * 100}%`,
-                      }}
-                    />
+                <div className={styles.progressWrap}>
+                  <div className={styles.progressBg}>
+                    <div className={styles.progressBar} style={{ width: `${(game.current_players / game.max_players) * 100}%` }} />
                   </div>
                 </div>
 
-                {/* Botón de Acción */}
                 {game.status === 'waiting' && game.current_players < game.max_players ? (
-                  <button
-                    onClick={() => handleJoinGame(game.id, game.is_private)}
-                    disabled={joiningGameId === game.id}
-                    className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>
-                      {joiningGameId === game.id ? 'Uniéndose...' : 'Unirse'}
-                    </span>
+                  <button onClick={() => handleJoinGame(game.id, game.is_private)} disabled={joiningGameId === game.id} className={styles.primaryButton}>
+                    <Play className={styles.buttonIcon} />
+                    <span>{joiningGameId === game.id ? 'Uniéndose...' : 'Unirse'}</span>
                   </button>
                 ) : game.status === 'in_progress' ? (
-                  <button
-                    onClick={() => handleJoinGame(game.id, game.is_private)}
-                    disabled={joiningGameId === game.id}
-                    className="btn-secondary w-full flex items-center justify-center space-x-2 disabled:opacity-50"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>
-                      {joiningGameId === game.id ? 'Uniéndose...' : 'Ver Juego'}
-                    </span>
+                  <button onClick={() => handleJoinGame(game.id, game.is_private)} disabled={joiningGameId === game.id} className={styles.secondaryButton}>
+                    <Play className={styles.buttonIcon} />
+                    <span>{joiningGameId === game.id ? 'Uniéndose...' : 'Ver Juego'}</span>
                   </button>
                 ) : (
-                  <button
-                    disabled
-                    className="btn-secondary w-full opacity-50 cursor-not-allowed"
-                  >
-                    Juego Finalizado
-                  </button>
+                  <button disabled className={styles.secondaryButtonDisabled}>Juego Finalizado</button>
                 )}
               </div>
             ))}
