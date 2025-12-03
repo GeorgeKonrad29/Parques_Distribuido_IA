@@ -19,6 +19,13 @@ from app.api.v1.distributed import router as distributed_router
 from app.sockets.socket_manager import socket_manager
 from app.ai.ai_service import ai_service
 
+from fastapi import FastAPI
+from app.router import suggestions
+
+app = FastAPI()
+app.include_router(suggestions.router, prefix="/api")
+
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
