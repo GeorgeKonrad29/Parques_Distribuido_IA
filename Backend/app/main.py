@@ -25,6 +25,14 @@ from app.router import suggestions
 app = FastAPI()
 app.include_router(suggestions.router, prefix="/api")
 
+from app.router.suggestions import router as suggestions_router
+
+app.include_router(
+    suggestions_router,
+    prefix=f"{settings.API_V1_STR}/suggestions",
+    tags=["suggestions"]
+)
+
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
