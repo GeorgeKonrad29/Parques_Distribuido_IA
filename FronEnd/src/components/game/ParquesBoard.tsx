@@ -10,7 +10,6 @@ export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Pro
   const boardRef = React.useRef<HTMLDivElement>(null!);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const myPlayerId = authService.getUser() ? String(authService.getUser()!.id) : null;
-
   const boardDimensions = useBoardDimensions(boardRef, tableroImage);
 
   const handlePieceClick = (pieceId: string) => {
@@ -53,7 +52,6 @@ export const ParquesBoard: React.FC<{ gameState: GameState; onRefresh: () => Pro
           onPositionClick={handlePositionClick}
           diceValues={gameState?.last_dice_value ? [gameState.last_dice_value] : []}
           activePlayerId={gameState.current_player_id}
-          myPlayerId={myPlayerId}
         />
       </div>
     </div>

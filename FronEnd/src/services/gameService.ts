@@ -258,6 +258,35 @@ class GameService {
       throw new Error('Error desconocido al pasar turno');
     }
   }
+
+  async makeMove(gameId: string, request: { piece_id: string; to_position: number; dice_value: number }): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${gameId}/move`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error al mover ficha';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch {
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error making move:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error desconocido al realizar movimiento');
+    }
+  }
 }
 
 export const gameService = new GameService();

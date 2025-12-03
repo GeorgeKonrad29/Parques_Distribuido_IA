@@ -1,5 +1,6 @@
 import React from 'react';
 import { type GameState, type Piece, type Player } from '../../types/game';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './GameTokens.module.css';
 
 interface BoardDimensions {
@@ -17,8 +18,9 @@ interface GameTokensProps {
   onPositionClick: (position: number) => void;
   diceValues: number[];
   activePlayerId: string | null;
-  myPlayerId: string | null;
 }
+
+import { gameService } from '../../services/gameService';
 
 const GameTokens: React.FC<GameTokensProps> = ({ 
   gameState, 
@@ -27,8 +29,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
   onPieceClick,
   onPositionClick,
   diceValues,
-  myPlayerId,
 }) => {
+  const { user } = useAuth();
+  const myPlayerName = user ? user.username : null;
   const BOARD_SIZE = 72;
   // Meta simplificada: no se usa conteo; la meta es la posición 71 del tablero
 
@@ -42,8 +45,8 @@ const GameTokens: React.FC<GameTokensProps> = ({
   const GOAL_ENTRY_POSITIONS: Record<string, number> = {
     YELLOW: 0,   // Casa base amarilla (posiciones 63-67, 0-11)
     BLUE: 17,    // Rotación 90° CCW
-    RED: 34,     // Rotación 180°
-    GREEN: 51,   // Rotación 270° CCW
+    GREEN: 34,     // Rotación 180°
+    RED: 51,   // Rotación 270° CCW
   };
 
   // Calcular coordenadas para posiciones del tablero principal (0-67)
@@ -204,18 +207,29 @@ const GameTokens: React.FC<GameTokensProps> = ({
   };
 
   // Función para loguear información relevante para mover fichas
-  const movement = () => {
-    // Color de cada jugador y sus fichas
-    gameState.players.forEach((player) => {
-      console.log('Color del jugador:', player.color);
-      player.pieces.forEach((piece) => {
-        // Posición actual de la ficha en el tablero (o 'home')
-        const posLabel = piece.status === 'home' ? 'home' : String(piece.position);
-        console.log(`Ficha ID: ${piece.id}`);
-        console.log('Posición actual en tablero:', posLabel);
-      });
-    });
-    // Número actual del dado
+  const movement = (playerColor: string, selectedPieceId: string) => {
+    const targetColor = playerColor.toUpperCase();
+    const player = gameState.players.find(p => p.color.toUpperCase() === targetColor);
+    if (!player) {
+      console.log('No se encontró jugador con color:', playerColor);
+      return;
+    }
+    // Información del usuario de la sesión actual
+    if (user) {
+      console.log('Jugador de la sesión actual:', user.username);
+      console.log('ID del jugador:', user.id);
+      console.log('Email del jugador:', user.email);
+    } else {
+      console.log('Jugador de la sesión actual: desconocido');
+    }
+    console.log('Color del jugador:', player.color);
+    // Solo mostrar la ficha seleccionada
+    const selectedPiece = player.pieces.find(p => p.id === selectedPieceId);
+    if (selectedPiece) {
+      const posLabel = selectedPiece.status === 'home' ? 'home' : String(selectedPiece.position);
+      console.log(`Ficha ID: ${selectedPiece.id}`);
+      console.log('Posición actual en tablero:', posLabel);
+    }
     console.log('Valores actuales del dado:', diceValues);
   };
 
@@ -224,7 +238,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
     const isSelected = selectedPieceId === piece.id;
     const anotherSelected = selectedPieceId !== null && selectedPieceId !== piece.id;
-    const isDisabled = anotherSelected;
+    // Verificar si el jugador actual es dueño de la ficha
+    const isNotOwner = myPlayerName ? player.name !== myPlayerName : true;
+    const isDisabled = anotherSelected || isNotOwner;
 
     // Si no hay dimensiones calculadas aún, no renderizar
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
@@ -243,7 +259,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     const handleClick = (e: React.MouseEvent) => {
       if (isDisabled) return; // Ignorar clicks cuando otra ficha está seleccionada
       e.stopPropagation();
-      movement();
+      movement(player.color, piece.id);
       onPieceClick(piece.id);
     };
 
@@ -282,7 +298,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
     if (!selectedPieceId) return null;
     if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
     // Solo mostrar si es mi turno
-    if (!(myPlayerId !== null)) return null;
+    if (!myPlayerName) return null;
+    const currentDiceValue = diceValues[0];
+    if (!currentDiceValue || currentDiceValue < 1 || currentDiceValue > 6) return null;
 
     const positions = [];
     const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);
@@ -291,7 +309,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     // Determinar el color del jugador de la ficha seleccionada para rotar numeración
     let selectedColorEntry = 0;
     const selectedOwner = gameState.players.find(p => p.pieces.some(pc => pc.id === selectedPieceId));
-    if (!selectedOwner || selectedOwner.id !== myPlayerId) return null;
+    if (!selectedOwner || selectedOwner.name !== myPlayerName) return null;
     if (selectedOwner) {
       const colorKey = selectedOwner.color.toUpperCase();
       selectedColorEntry = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
@@ -310,7 +328,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
 
     for (let i = 0; i < BOARD_SIZE; i++) {
       if (!candidates.has(i)) continue;
-      const coords = getBoardPositionCoords(i);
+      const colorKey = selectedOwner.color.toUpperCase();
+      const colorOffset = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
+      const coords = getBoardPositionCoords(i + colorOffset);
       const absoluteX = boardDimensions.imageX + (coords.x / 100) * boardDimensions.imageWidth;
       const absoluteY = boardDimensions.imageY + (coords.y / 100) * boardDimensions.imageHeight;
 
@@ -325,9 +345,24 @@ const GameTokens: React.FC<GameTokensProps> = ({
             width: `${positionSize}px`,
             height: `${positionSize}px`,
           }}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             onPositionClick(i);
+            const gameId = gameState.id;
+            if (gameId) {
+              try {
+                await gameService.makeMove(gameId, {
+                  piece_id: selectedPieceId,
+                  to_position: i,
+                  dice_value: currentDiceValue,
+                });
+              } catch (err) {
+                console.error('Error al realizar movimiento:', err);
+              }
+            }
+            else {
+              console.log('No gameId provided');
+            }
           }}
           title={`Posición ${displayNumber}`}
         >
@@ -339,9 +374,68 @@ const GameTokens: React.FC<GameTokensProps> = ({
     return positions;
   };
 
+  // Renderizar botón en la posición donde caería la ficha según el dado
+  const renderDiceButton = () => {
+    if (!selectedPieceId || diceValues.length === 0) return null;
+    if (!boardDimensions.imageWidth || !boardDimensions.imageHeight) return null;
+
+    // Obtener la ficha seleccionada
+    const selectedOwner = gameState.players.find(p => p.pieces.some(pc => pc.id === selectedPieceId));
+    if (!selectedOwner || selectedOwner.name !== myPlayerName) return null;
+
+    const selectedPiece = selectedOwner.pieces.find(pc => pc.id === selectedPieceId);
+    if (!selectedPiece) return null;
+
+    const currentPos = selectedPiece.position;
+    const diceValue = diceValues[0]; // Usar el primer valor del dado
+    const colorKey = selectedOwner.color.toUpperCase();
+    const colorOffset = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
+
+    // Calcular la nueva posición
+    const newPos = currentPos + diceValue + colorOffset;
+    const coords = getBoardPositionCoords(newPos);
+
+    const absoluteX = boardDimensions.imageX + (coords.x / 100) * boardDimensions.imageWidth;
+    const absoluteY = boardDimensions.imageY + (coords.y / 100) * boardDimensions.imageHeight;
+
+    const baseSide = Math.min(boardDimensions.imageWidth, boardDimensions.imageHeight);
+    const btnSize = Math.max(20, Math.round((baseSide * 4) / 100));
+
+    return (
+      
+      <button
+        key={`dice-btn-${newPos}`}
+        style={{
+          position: 'absolute',
+          left: `${absoluteX}px`,
+          top: `${absoluteY}px`,
+          width: `${btnSize}px`,
+          height: `${btnSize}px`,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '8px',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          cursor: 'pointer',
+          zIndex: 5,
+          fontSize: '10px',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('Botón presionado - Nueva posición:', newPos);
+          onPositionClick(newPos);
+        }}
+        title={`Mover a posición ${newPos}`}
+      >
+        {diceValue}
+      </button>
+    );
+  };
+
   return (
     <div className={styles['tokens-overlay']}>
       {renderBoardPositions()}
+      {renderDiceButton()}
       {piecesWithCoords.map(({ piece, player, x, y, positionKey }) =>
         renderPiece(piece, player, x, y, positionCounts[positionKey] || 1)
       )}
