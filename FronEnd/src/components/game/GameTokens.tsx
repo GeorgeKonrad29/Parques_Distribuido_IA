@@ -203,6 +203,22 @@ const GameTokens: React.FC<GameTokensProps> = ({
     return { pieces, positionCounts };
   };
 
+  // Función para loguear información relevante para mover fichas
+  const movement = () => {
+    // Color de cada jugador y sus fichas
+    gameState.players.forEach((player) => {
+      console.log('Color del jugador:', player.color);
+      player.pieces.forEach((piece) => {
+        // Posición actual de la ficha en el tablero (o 'home')
+        const posLabel = piece.status === 'home' ? 'home' : String(piece.position);
+        console.log(`Ficha ID: ${piece.id}`);
+        console.log('Posición actual en tablero:', posLabel);
+      });
+    });
+    // Número actual del dado
+    console.log('Valores actuales del dado:', diceValues);
+  };
+
   // Renderizar una ficha
   const renderPiece = (piece: Piece, player: Player, x: number, y: number, count: number) => {
     const color = COLOR_THEME[player.color.toUpperCase()] || COLOR_THEME.RED;
@@ -227,6 +243,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
     const handleClick = (e: React.MouseEvent) => {
       if (isDisabled) return; // Ignorar clicks cuando otra ficha está seleccionada
       e.stopPropagation();
+      movement();
       onPieceClick(piece.id);
     };
 

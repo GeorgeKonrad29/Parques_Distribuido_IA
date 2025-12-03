@@ -108,18 +108,19 @@ export const GameList: React.FC = () => {
             </div>
 
             <div className={styles.colorGrid}>
-              {(['red', 'blue', 'yellow', 'green'] as PlayerColor[]).map((color) => {
+              {(['red', 'green', 'yellow', 'blue'] as PlayerColor[]).map((color) => {
                 const colorStyles = {
                   red: { bg: '#ef4444', border: '#dc2626', text: '#ffffff' },
-                  blue: { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' },
-                  yellow: { bg: '#eab308', border: '#ca8a04', text: '#1f2937' },
                   green: { bg: '#22c55e', border: '#16a34a', text: '#ffffff' },
+                  yellow: { bg: '#eab308', border: '#ca8a04', text: '#1f2937' },
+                  blue: { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' },
+                  
                 };
                 const colorNames = {
                   red: 'Rojo',
-                  blue: 'Azul',
-                  yellow: 'Amarillo',
                   green: 'Verde',
+                  yellow: 'Amarillo',
+                  blue: 'Azul',
                 };
                 
                 const style = colorStyles[color];
