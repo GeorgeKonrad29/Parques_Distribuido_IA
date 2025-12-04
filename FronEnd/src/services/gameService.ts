@@ -287,6 +287,7 @@ class GameService {
       throw new Error('Error desconocido al realizar movimiento');
     }
   }
+
 }
 
 export const gameService = new GameService();

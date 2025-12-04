@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Users, Crown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Users, Crown, Plus } from 'lucide-react';
 import { gameService} from '../../services/gameService';
 // removed unused imports
-import { type GameState, type Player } from '../../types/game';
+import { type GameState } from '../../types/game';
 import { PlayersSidebar } from './PlayersSidebar';
 import { GameDetails } from './GameDetails';
 import { DicePanel } from './DicePanel';
 import { Loading } from '../common/Loading';
 import { ParquesBoard } from './ParquesBoard';
+import { AddBotModal } from './AddBotModal';
 import styles from './GameBoard.module.css';
 
 export const GameBoard: React.FC = () => {
@@ -18,6 +19,7 @@ export const GameBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startingGame, setStartingGame] = useState(false);
+  const [showAddBotModal, setShowAddBotModal] = useState(false);
 
   const fetchGameState = async () => {
     if (!gameId) {
@@ -60,33 +62,6 @@ export const GameBoard: React.FC = () => {
   }, [gameId]);
 
 
-  const renderPlayerCard = (player: Player) => {
-    const isCurrentTurn = gameState?.current_player_id === player.id;
-    return (
-      <div key={player.id} className={`card border ${isCurrentTurn ? styles.activeTurn : 'border-transparent'}`}>
-        <div className={styles.playerCardHeader}>
-          <div>
-            <p className={styles.playerCardName}>{player.name}</p>
-            <p className={styles.playerCardColor}>Color: {player.color.toLowerCase()}</p>
-          </div>
-          {isCurrentTurn && (
-            <span className={styles.currentTurnBadge}>Turno actual</span>
-          )}
-        </div>
-
-        <div className={styles.piecesInfo}>
-          {player.pieces.map((piece) => (
-            <div key={piece.id} className={styles.pieceCard}>
-              <p className={styles.pieceLabel}>Ficha {piece.id.split('-').pop()}</p>
-              <p className={styles.piecePosition}>Posición: {piece.position}</p>
-              <span className={styles.pieceStatus}>Estado: {piece.status.toLowerCase()}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return <Loading />;
   }
@@ -113,24 +88,33 @@ export const GameBoard: React.FC = () => {
                 <span>Actualizar</span>
               </button>
               {gameState && gameState.status === 'waiting' && (
-                <button
-                  onClick={async () => {
-                    if (!gameState) return;
-                    setStartingGame(true);
-                    try {
-                      await gameService.startGame(String(gameState.id));
-                      await fetchGameState();
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : 'Error al iniciar el juego');
-                    } finally {
-                      setStartingGame(false);
-                    }
-                  }}
-                  className={styles.startButton}
-                  disabled={startingGame}
-                >
-                  {startingGame ? 'Iniciando...' : 'Iniciar juego'}
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowAddBotModal(true)}
+                    className={styles.addBotButton}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Agregar Bot</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!gameState) return;
+                      setStartingGame(true);
+                      try {
+                        await gameService.startGame(String(gameState.id));
+                        await fetchGameState();
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Error al iniciar el juego');
+                      } finally {
+                        setStartingGame(false);
+                      }
+                    }}
+                    className={styles.startButton}
+                    disabled={startingGame}
+                  >
+                    {startingGame ? 'Iniciando...' : 'Iniciar juego'}
+                  </button>
+                </>
               )}
               {gameState && (
                 <button
@@ -219,6 +203,15 @@ export const GameBoard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {gameState && (
+        <AddBotModal
+          gameId={gameState.id}
+          isOpen={showAddBotModal}
+          onClose={() => setShowAddBotModal(false)}
+          onBotAdded={fetchGameState}
+        />
+      )}
     </div>
   );
 };
