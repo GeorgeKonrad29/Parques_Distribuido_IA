@@ -23,6 +23,39 @@ class GameService:
     def __init__(self):
         self.active_games: Dict[str, GameState] = {}
     
+    async def _load_game_from_db(self, db: AsyncSession, game_id: str) -> Optional[GameState]:
+        """Cargar juego desde la base de datos si no está en memoria"""
+        # Verificar si el juego existe en la BD
+        result = await db.execute(select(Game).where(Game.id == game_id))
+        db_game = result.scalar_one_or_none()
+        
+        if not db_game or db_game.status == GameStatus.FINISHED:
+            return None
+        
+        # Crear estado del juego en memoria
+        game_state = game_engine.create_game(game_id)
+        
+        # Cargar jugadores
+        result = await db.execute(
+            select(GamePlayer, User).join(User).where(GamePlayer.game_id == game_id)
+        )
+        players = result.all()
+        
+        for game_player, user in players:
+            game_engine.add_player(
+                game_id,
+                str(user.id),
+                user.display_name or user.username,
+                game_player.color
+            )
+        
+        # Si el juego está activo, actualizar estado
+        if db_game.status == GameStatus.ACTIVE:
+            game_state.status = GameStatus.ACTIVE
+        
+        self.active_games[game_id] = game_state
+        return game_state
+    
     async def create_game(
         self, 
         db: AsyncSession, 
@@ -178,7 +211,9 @@ class GameService:
         # Iniciar juego en el motor
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Estado del juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Estado del juego no encontrado")
         
         success = game_engine.start_game(game_id)
         if not success:
@@ -200,11 +235,13 @@ class GameService:
         game_id: str, 
         user_id: str
     ) -> Optional[Dict[str, Any]]:
-        """Lanzar el dado DOS veces (reglas de Parqués)"""
+        """Lanzar el dado (DOS veces en Parqués)"""
         
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Juego no encontrado")
         
         # Encontrar el player_id del usuario
         player_id = None
@@ -232,7 +269,9 @@ class GameService:
         
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Juego no encontrado")
         
         # Encontrar el player_id del usuario
         player_id = None
@@ -261,7 +300,9 @@ class GameService:
         
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Juego no encontrado")
         
         # Encontrar el player_id del usuario
         player_id = None
@@ -286,7 +327,9 @@ class GameService:
         
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Juego no encontrado")
         
         # Encontrar el player_id del usuario
         player_id = None
@@ -362,9 +405,12 @@ class GameService:
         if not player:
             raise ValueError("No tienes acceso a este juego")
         
+        # Obtener o cargar el juego
         game_state = self.active_games.get(game_id)
         if not game_state:
-            raise ValueError("Juego no encontrado")
+            game_state = await self._load_game_from_db(db, game_id)
+            if not game_state:
+                raise ValueError("Juego no encontrado")
         
         # Convertir estado del juego a respuesta
         players = []
