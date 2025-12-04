@@ -1,6 +1,7 @@
 import React from 'react';
 import { type GameState, type Piece, type Player } from '../../types/game';
 import { useAuth } from '../../hooks/useAuth';
+import { gameService } from '../../services/gameService';
 import styles from './GameTokens.module.css';
 
 interface BoardDimensions {
@@ -20,7 +21,6 @@ interface GameTokensProps {
   activePlayerId: string | null;
 }
 
-import { gameService } from '../../services/gameService';
 
 const GameTokens: React.FC<GameTokensProps> = ({ 
   gameState, 
@@ -70,13 +70,13 @@ const GameTokens: React.FC<GameTokensProps> = ({
       2: { x: 28, y: 61 },
       3: { x: 33, y: 63 },
       4: { x: 36.5, y: 66 },
-      5: { x: 38.5, y: 70.5 },
-      6: { x: 40, y: 75.3 },
-      7: { x: 40, y: 79.5 },
-      8: { x: 40, y: 83.5 },
-      9: { x: 40, y: 87.5 },
-      10: { x: 40, y: 92 },
-      11: { x: 40, y: 96 },
+      39: { x: 38.5, y: 70.5 },
+      40: { x: 40, y: 75.3 },
+      41: { x: 40, y: 79.5 },
+      42: { x: 40, y: 83.5 },
+      43: { x: 40, y: 87.5 },
+      44: { x: 40, y: 92 },
+      45: { x: 40, y: 96 },
     };
 
     // Si la posición está en el mapa base, devolver directamente
@@ -101,41 +101,41 @@ const GameTokens: React.FC<GameTokensProps> = ({
     if (normalizedPos === 27) return { x: 92, y: 60 };
     if (normalizedPos === 28) return { x: 96, y: 60 };
     // 29-45 (rotación 180°)
-    if (normalizedPos === 29) return { x: 96, y: 47 };
-    if (normalizedPos === 30) return { x: 96, y: 40 };
-    if (normalizedPos === 31) return { x: 91.8, y: 40 };
-    if (normalizedPos === 32) return { x: 87.8, y: 40 };
-    if (normalizedPos === 33) return { x: 83.8, y: 40 };
-    if (normalizedPos === 34) return { x: 79.6, y: 40 };
-    if (normalizedPos === 35) return { x: 75.5, y: 40 };
-    if (normalizedPos === 36) return { x: 70.5, y: 39 };
-    if (normalizedPos === 37) return { x: 65.5, y: 37 };
-    if (normalizedPos === 38) return { x: 62, y: 33.5 };
-    if (normalizedPos === 39) return { x: 60, y: 29 };
-    if (normalizedPos === 40) return { x: 59, y: 23.7 };
-    if (normalizedPos === 41) return { x: 59, y: 19.5 };
-    if (normalizedPos === 42) return { x: 59, y: 15.5 };
-    if (normalizedPos === 43) return { x: 59, y: 11.5 };
-    if (normalizedPos === 44) return { x: 59, y: 7 };
-    if (normalizedPos === 45) return { x: 59, y: 3 };
+    if (normalizedPos === 46) return { x: 96, y: 47 };
+    if (normalizedPos === 47) return { x: 96, y: 40 };
+    if (normalizedPos === 48) return { x: 91.8, y: 40 };
+    if (normalizedPos === 49) return { x: 87.8, y: 40 };
+    if (normalizedPos === 50) return { x: 83.8, y: 40 };
+    if (normalizedPos === 51) return { x: 79.6, y: 40 };
+    if (normalizedPos === 52) return { x: 75.5, y: 40 };
+    if (normalizedPos === 53) return { x: 70.5, y: 39 };
+    if (normalizedPos === 54) return { x: 65.5, y: 37 };
+    if (normalizedPos === 55) return { x: 62, y: 33.5 };
+    if (normalizedPos === 56) return { x: 60, y: 29 };
+    if (normalizedPos === 57) return { x: 59, y: 23.7 };
+    if (normalizedPos === 58) return { x: 59, y: 19.5 };
+    if (normalizedPos === 59) return { x: 59, y: 15.5 };
+    if (normalizedPos === 60) return { x: 59, y: 11.5 };
+    if (normalizedPos === 61) return { x: 59, y: 7 };
+    if (normalizedPos === 62) return { x: 59, y: 3 };
     // 46-62 (rotación 270° CCW = 90° CW del segmento base anterior)
-    if (normalizedPos === 46) return { x: 47, y: 3 };
-    if (normalizedPos === 47) return { x: 40, y: 3 };
-    if (normalizedPos === 48) return { x: 40, y: 7.2 };
-    if (normalizedPos === 49) return { x: 40, y: 11.2 };
-    if (normalizedPos === 50) return { x: 40, y: 15.2 };
-    if (normalizedPos === 51) return { x: 40, y: 19 };
-    if (normalizedPos === 52) return { x: 40, y: 23.8 };
-    if (normalizedPos === 53) return { x: 39, y: 29 };
-    if (normalizedPos === 54) return { x: 37, y: 33 };
-    if (normalizedPos === 55) return { x: 33.8, y: 36.8 };
-    if (normalizedPos === 56) return { x: 29, y: 39 };
-    if (normalizedPos === 57) return { x: 23.7, y: 40 };
-    if (normalizedPos === 58) return { x: 19.3, y: 40 };
-    if (normalizedPos === 59) return { x: 15, y: 40 };
-    if (normalizedPos === 60) return { x: 11, y: 40 };
-    if (normalizedPos === 61) return { x: 7, y: 40 };
-    if (normalizedPos === 62) return { x: 3, y: 40 };
+    if (normalizedPos === 29) return { x: 47, y: 3 };
+    if (normalizedPos === 30) return { x: 40, y: 3 };
+    if (normalizedPos === 31) return { x: 40, y: 7.2 };
+    if (normalizedPos === 32) return { x: 40, y: 11.2 };
+    if (normalizedPos === 33) return { x: 40, y: 15.2 };
+    if (normalizedPos === 0) return { x: 40, y: 19 };
+    if (normalizedPos === 1) return { x: 40, y: 23.8 };
+    if (normalizedPos === 2) return { x: 39, y: 29 };
+    if (normalizedPos === 3) return { x: 37, y: 33 };
+    if (normalizedPos === 4) return { x: 33.8, y: 36.8 };
+    if (normalizedPos === 5) return { x: 29, y: 39 };
+    if (normalizedPos === 6) return { x: 23.7, y: 40 };
+    if (normalizedPos === 7) return { x: 19.3, y: 40 };
+    if (normalizedPos === 8) return { x: 15, y: 40 };
+    if (normalizedPos === 9) return { x: 11, y: 40 };
+    if (normalizedPos === 10) return { x: 7, y: 40 };
+    if (normalizedPos === 11) return { x: 3, y: 40 };
     // Fallback
     return { x: 50, y: 50 };
   };
@@ -207,7 +207,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
   };
 
   // Función para loguear información relevante para mover fichas
-  const movement = (playerColor: string, selectedPieceId: string) => {
+  const movement = async (playerColor: string, selectedPieceId: string) => {
     const targetColor = playerColor.toUpperCase();
     const player = gameState.players.find(p => p.color.toUpperCase() === targetColor);
     if (!player) {
@@ -217,8 +217,6 @@ const GameTokens: React.FC<GameTokensProps> = ({
     // Información del usuario de la sesión actual
     if (user) {
       console.log('Jugador de la sesión actual:', user.username);
-      console.log('ID del jugador:', user.id);
-      console.log('Email del jugador:', user.email);
     } else {
       console.log('Jugador de la sesión actual: desconocido');
     }
@@ -231,6 +229,25 @@ const GameTokens: React.FC<GameTokensProps> = ({
       console.log('Posición actual en tablero:', posLabel);
     }
     console.log('Valores actuales del dado:', diceValues);
+    const currentDiceValue = diceValues[0];
+    try {
+      const validMovesResp = await gameService.getValidMoves(gameState.id, currentDiceValue);
+      const moves = Array.isArray(validMovesResp?.moves) ? validMovesResp.moves : validMovesResp;
+      const moveForPiece = moves.find((m: any) => m.piece_id === selectedPieceId);
+      if (moveForPiece) {
+        console.log('Movimiento válido para ficha', selectedPieceId, '- to_position:', moveForPiece.to_position);
+      } else {
+        console.log('No hay movimientos válidos para la ficha seleccionada.');
+      }
+      // Además, listar to_position de todos los movimientos devueltos
+      moves.forEach((m: any) => {
+        if (m && m.piece_id == selectedPieceId && m.move_type)
+        {console.log('piece_id:', m.piece_id, '| to_position:', m.to_position, '| move_type:', m.move_type);}
+      });
+    } catch (err) {
+      console.error('Error al obtener movimientos válidos:', err);
+    }
+
   };
 
   // Renderizar una ficha
@@ -328,9 +345,7 @@ const GameTokens: React.FC<GameTokensProps> = ({
 
     for (let i = 0; i < BOARD_SIZE; i++) {
       if (!candidates.has(i)) continue;
-      const colorKey = selectedOwner.color.toUpperCase();
-      const colorOffset = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
-      const coords = getBoardPositionCoords(i + colorOffset);
+      const coords = getBoardPositionCoords(i);
       const absoluteX = boardDimensions.imageX + (coords.x / 100) * boardDimensions.imageWidth;
       const absoluteY = boardDimensions.imageY + (coords.y / 100) * boardDimensions.imageHeight;
 
@@ -347,21 +362,28 @@ const GameTokens: React.FC<GameTokensProps> = ({
           }}
           onClick={async (e) => {
             e.stopPropagation();
-            onPositionClick(i);
             const gameId = gameState.id;
-            if (gameId) {
-              try {
-                await gameService.makeMove(gameId, {
-                  piece_id: selectedPieceId,
-                  to_position: i,
-                  dice_value: currentDiceValue,
-                });
-              } catch (err) {
-                console.error('Error al realizar movimiento:', err);
-              }
-            }
-            else {
+            if (!gameId) {
               console.log('No gameId provided');
+              return;
+            }
+            try {
+              const validMovesResp = await gameService.getValidMoves(gameId, currentDiceValue);
+              const moves = Array.isArray(validMovesResp?.moves) ? validMovesResp.moves : validMovesResp;
+              const moveForPiece = moves.find((m: any) => m.piece_id === selectedPieceId);
+              if (!moveForPiece) {
+                console.log('No hay movimiento válido para la ficha seleccionada.');
+                return;
+              }
+              const targetPos = moveForPiece.to_position;
+              onPositionClick(targetPos);
+              await gameService.makeMove(gameId, {
+                piece_id: selectedPieceId!,
+                to_position: targetPos,
+                dice_value: currentDiceValue,
+              });
+            } catch (err) {
+              console.error('Error al realizar movimiento:', err);
             }
           }}
           title={`Posición ${displayNumber}`}
@@ -388,11 +410,9 @@ const GameTokens: React.FC<GameTokensProps> = ({
 
     const currentPos = selectedPiece.position;
     const diceValue = diceValues[0]; // Usar el primer valor del dado
-    const colorKey = selectedOwner.color.toUpperCase();
-    const colorOffset = GOAL_ENTRY_POSITIONS[colorKey] ?? 0;
 
     // Calcular la nueva posición
-    const newPos = currentPos + diceValue + colorOffset;
+    const newPos = currentPos + diceValue;
     const coords = getBoardPositionCoords(newPos);
 
     const absoluteX = boardDimensions.imageX + (coords.x / 100) * boardDimensions.imageWidth;

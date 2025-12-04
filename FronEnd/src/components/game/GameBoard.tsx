@@ -46,6 +46,19 @@ export const GameBoard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (gameId) {
+        // Fetch sin mostrar loading
+        gameService.getGameState(gameId)
+          .then((state) => setGameState(state))
+          .catch((err) => console.error('Error updating game state:', err));
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [gameId]);
+
 
   const renderPlayerCard = (player: Player) => {
     const isCurrentTurn = gameState?.current_player_id === player.id;
@@ -179,26 +192,26 @@ export const GameBoard: React.FC = () => {
               </div>
 
               <div className={styles.sidebar}>
+                <DicePanel gameState={gameState} onRefresh={fetchGameState} />
                 <PlayersSidebar gameState={gameState} />
                 <GameDetails gameState={gameState} />
-                <DicePanel gameState={gameState} onRefresh={fetchGameState} />
 
                 {/* Estado (JSON) para depuración */}
-                <div className={`card ${styles.detailsCard}`}>
+                {/* <div className={`card ${styles.detailsCard}`}>
                   <h2 className={styles.detailsTitle}>Estado (JSON)</h2>
                   <pre className={styles.jsonBlock}>
                     {JSON.stringify(gameState, null, 2)}
                   </pre>
-                </div>
+                </div> */}
               </div>
             </section>
 
-            <section className={`card ${styles.piecesSection}`}>
+            {/* <section className={`card ${styles.piecesSection}`}>
               <h2 className={styles.piecesTitle}>Piezas por Jugador</h2>
               <div className={styles.piecesGrid}>
                 {gameState.players.map((player) => renderPlayerCard(player))}
               </div>
-            </section>
+            </section> */}
           </div>
         ) : (
           <div className={styles.emptyState}>
