@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Users, Crown, Plus } from 'lucide-react';
 import { gameService} from '../../services/gameService';
+import { iaService } from '../../services/IAService';
 // removed unused imports
 import { type GameState } from '../../types/game';
 import { PlayersSidebar } from './PlayersSidebar';
@@ -10,6 +11,7 @@ import { DicePanel } from './DicePanel';
 import { Loading } from '../common/Loading';
 import { ParquesBoard } from './ParquesBoard';
 import { AddBotModal } from './AddBotModal';
+import { RecommendationsPanel } from './RecommendationsPanel';
 import styles from './GameBoard.module.css';
 
 export const GameBoard: React.FC = () => {
@@ -48,10 +50,31 @@ export const GameBoard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
+ /* useEffect(() => {
+    const interval = setInterval(() => {
+      if (gameId && gameState) {
+        // Intenta ejecutar turno del bot cada 5 segundos
+        iaService.executeBotTurn(gameId)
+          .then(() => {
+            // Actualiza el estado del juego después de ejecutar el turno del bot
+            gameService.getGameState(gameId)
+              .then((state) => setGameState(state))
+              .catch((err) => console.error('Error updating game state after bot turn:', err));
+          })
+          .catch((err) => {
+            // Si hay error (ej: no es turno del bot), continúa sin hacer nada
+            console.error('Error executing bot turn:', err);
+          });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [gameId, gameState]);*/
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (gameId) {
-        // Fetch sin mostrar loading
+        // Fetch sin mostrar loading cada 10 segundos
         gameService.getGameState(gameId)
           .then((state) => setGameState(state))
           .catch((err) => console.error('Error updating game state:', err));
@@ -89,13 +112,13 @@ export const GameBoard: React.FC = () => {
               </button>
               {gameState && gameState.status === 'waiting' && (
                 <>
-                  <button
+                  {/* <button
                     onClick={() => setShowAddBotModal(true)}
                     className={styles.addBotButton}
                   >
                     <Plus className="w-4 h-4" />
                     <span>Agregar Bot</span>
-                  </button>
+                  </button>*/}
                   <button
                     onClick={async () => {
                       if (!gameState) return;
@@ -179,6 +202,7 @@ export const GameBoard: React.FC = () => {
                 <DicePanel gameState={gameState} onRefresh={fetchGameState} />
                 <PlayersSidebar gameState={gameState} />
                 <GameDetails gameState={gameState} />
+                <RecommendationsPanel />
 
                 {/* Estado (JSON) para depuración */}
                 {/* <div className={`card ${styles.detailsCard}`}>

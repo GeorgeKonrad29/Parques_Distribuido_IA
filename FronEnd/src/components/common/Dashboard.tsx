@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Gamepad2, Trophy, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { SettingsModal } from './SettingsModal';
 import styles from './Dashboard.module.css';
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user);
 
   const handleLogout = () => {
     logout();
@@ -14,6 +17,10 @@ export const Dashboard: React.FC = () => {
 
   const handlePlayNow = () => {
     navigate('/games');
+  };
+
+  const handleProfileUpdated = (updatedUser: any) => {
+    setCurrentUser(updatedUser);
   };
 
   return (
@@ -96,7 +103,7 @@ export const Dashboard: React.FC = () => {
                 <p className={styles.cardSubtitle}>Personalizar tu experiencia</p>
               </div>
             </div>
-            <button className={styles.settingsButton}>Configurar</button>
+            <button onClick={() => setShowSettingsModal(true)} className={styles.settingsButton}>Configurar</button>
           </div>
         </div>
 
@@ -124,6 +131,13 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        user={currentUser}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </div>
   );
 };
