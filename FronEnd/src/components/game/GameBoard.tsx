@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Users, Crown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Users, Crown, Plus } from 'lucide-react';
 import { gameService} from '../../services/gameService';
+import { iaService } from '../../services/IAService';
 // removed unused imports
-import { type GameState, type Player } from '../../types/game';
+import { type GameState } from '../../types/game';
 import { PlayersSidebar } from './PlayersSidebar';
 import { GameDetails } from './GameDetails';
 import { DicePanel } from './DicePanel';
 import { Loading } from '../common/Loading';
 import { ParquesBoard } from './ParquesBoard';
+import { AddBotModal } from './AddBotModal';
+import { RecommendationsPanel } from './RecommendationsPanel';
 import styles from './GameBoard.module.css';
 
 export const GameBoard: React.FC = () => {
@@ -18,6 +21,7 @@ export const GameBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startingGame, setStartingGame] = useState(false);
+  const [showAddBotModal, setShowAddBotModal] = useState(false);
 
   const fetchGameState = async () => {
     if (!gameId) {
@@ -46,33 +50,40 @@ export const GameBoard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
+ /* useEffect(() => {
+    const interval = setInterval(() => {
+      if (gameId && gameState) {
+        // Intenta ejecutar turno del bot cada 5 segundos
+        iaService.executeBotTurn(gameId)
+          .then(() => {
+            // Actualiza el estado del juego después de ejecutar el turno del bot
+            gameService.getGameState(gameId)
+              .then((state) => setGameState(state))
+              .catch((err) => console.error('Error updating game state after bot turn:', err));
+          })
+          .catch((err) => {
+            // Si hay error (ej: no es turno del bot), continúa sin hacer nada
+            console.error('Error executing bot turn:', err);
+          });
+      }
+    }, 5000);
 
-  const renderPlayerCard = (player: Player) => {
-    const isCurrentTurn = gameState?.current_player_id === player.id;
-    return (
-      <div key={player.id} className={`card border ${isCurrentTurn ? styles.activeTurn : 'border-transparent'}`}>
-        <div className={styles.playerCardHeader}>
-          <div>
-            <p className={styles.playerCardName}>{player.name}</p>
-            <p className={styles.playerCardColor}>Color: {player.color.toLowerCase()}</p>
-          </div>
-          {isCurrentTurn && (
-            <span className={styles.currentTurnBadge}>Turno actual</span>
-          )}
-        </div>
+    return () => clearInterval(interval);
+  }, [gameId, gameState]);*/
 
-        <div className={styles.piecesInfo}>
-          {player.pieces.map((piece) => (
-            <div key={piece.id} className={styles.pieceCard}>
-              <p className={styles.pieceLabel}>Ficha {piece.id.split('-').pop()}</p>
-              <p className={styles.piecePosition}>Posición: {piece.position}</p>
-              <span className={styles.pieceStatus}>Estado: {piece.status.toLowerCase()}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (gameId) {
+        // Fetch sin mostrar loading cada 10 segundos
+        gameService.getGameState(gameId)
+          .then((state) => setGameState(state))
+          .catch((err) => console.error('Error updating game state:', err));
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [gameId]);
+
 
   if (loading) {
     return <Loading />;
@@ -100,24 +111,33 @@ export const GameBoard: React.FC = () => {
                 <span>Actualizar</span>
               </button>
               {gameState && gameState.status === 'waiting' && (
-                <button
-                  onClick={async () => {
-                    if (!gameState) return;
-                    setStartingGame(true);
-                    try {
-                      await gameService.startGame(String(gameState.id));
-                      await fetchGameState();
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : 'Error al iniciar el juego');
-                    } finally {
-                      setStartingGame(false);
-                    }
-                  }}
-                  className={styles.startButton}
-                  disabled={startingGame}
-                >
-                  {startingGame ? 'Iniciando...' : 'Iniciar juego'}
-                </button>
+                <>
+                  {/* <button
+                    onClick={() => setShowAddBotModal(true)}
+                    className={styles.addBotButton}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Agregar Bot</span>
+                  </button>*/}
+                  <button
+                    onClick={async () => {
+                      if (!gameState) return;
+                      setStartingGame(true);
+                      try {
+                        await gameService.startGame(String(gameState.id));
+                        await fetchGameState();
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Error al iniciar el juego');
+                      } finally {
+                        setStartingGame(false);
+                      }
+                    }}
+                    className={styles.startButton}
+                    disabled={startingGame}
+                  >
+                    {startingGame ? 'Iniciando...' : 'Iniciar juego'}
+                  </button>
+                </>
               )}
               {gameState && (
                 <button
@@ -179,26 +199,27 @@ export const GameBoard: React.FC = () => {
               </div>
 
               <div className={styles.sidebar}>
+                <DicePanel gameState={gameState} onRefresh={fetchGameState} />
                 <PlayersSidebar gameState={gameState} />
                 <GameDetails gameState={gameState} />
-                <DicePanel gameState={gameState} onRefresh={fetchGameState} />
+                <RecommendationsPanel />
 
                 {/* Estado (JSON) para depuración */}
-                <div className={`card ${styles.detailsCard}`}>
+                {/* <div className={`card ${styles.detailsCard}`}>
                   <h2 className={styles.detailsTitle}>Estado (JSON)</h2>
                   <pre className={styles.jsonBlock}>
                     {JSON.stringify(gameState, null, 2)}
                   </pre>
-                </div>
+                </div> */}
               </div>
             </section>
 
-            <section className={`card ${styles.piecesSection}`}>
+            {/* <section className={`card ${styles.piecesSection}`}>
               <h2 className={styles.piecesTitle}>Piezas por Jugador</h2>
               <div className={styles.piecesGrid}>
                 {gameState.players.map((player) => renderPlayerCard(player))}
               </div>
-            </section>
+            </section> */}
           </div>
         ) : (
           <div className={styles.emptyState}>
@@ -206,6 +227,15 @@ export const GameBoard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {gameState && (
+        <AddBotModal
+          gameId={gameState.id}
+          isOpen={showAddBotModal}
+          onClose={() => setShowAddBotModal(false)}
+          onBotAdded={fetchGameState}
+        />
+      )}
     </div>
   );
 };

@@ -86,9 +86,49 @@
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  margin-left: 8px;
+  white-space: nowrap;
+  flex-shrink: 1;
+  font-size: 0.875rem;
 }
+
+@media (max-width: 640px) {
+  .startButton {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+}
+
 .startButton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.addBotButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 1;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+@media (max-width: 640px) {
+  .addBotButton {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+}
+
+.addBotButton:hover {
+  background-color: #0284c7;
+}
 
 .leaveButton {
   display: inline-flex;
@@ -100,7 +140,23 @@
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  margin-left: 8px;
+  white-space: nowrap;
+  flex-shrink: 1;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+@media (max-width: 640px) {
+  .leaveButton {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+}
+
+.leaveButton:hover {
+  background-color: #dc2626;
 }
 
 /* Dice controls panel styling */

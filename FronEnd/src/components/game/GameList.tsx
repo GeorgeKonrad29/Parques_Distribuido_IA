@@ -58,8 +58,18 @@ export const GameList: React.FC = () => {
       setSelectedColor(null);
       navigate(`/game/${selectedGame.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al unirse al juego');
-      console.error('Error joining game:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al unirse al juego';
+      
+      // Si el error es que ya está unido al juego, navega al juego directamente
+      if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('ya está')) {
+        setShowColorModal(false);
+        setSelectedGame(null);
+        setSelectedColor(null);
+        navigate(`/game/${selectedGame.id}`);
+      } else {
+        setError(errorMessage);
+        console.error('Error joining game:', err);
+      }
     } finally {
       setJoiningGameId(null);
     }
